@@ -207,37 +207,189 @@ body {
   color: var(--bad);
 }
 
-/* -------------------------------------------------------------- loading */
+/* ----------------------------------------------------------- onboarding */
 
-.loading { padding: 8px 24px 48px; }
+.onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 150ms ease;
+}
 
-.loading-card {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 36px 24px;
-  border-radius: var(--radius);
+.onboarding.closing { opacity: 0; }
+
+.onb-skip {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.onb-skip:hover { color: var(--text); }
+
+.onb-stage {
+  position: relative;
+  width: min(680px, 90vw);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
-.spinner {
-  width: 22px;
-  height: 22px;
-  margin: 0 auto 16px;
-  border: 2.5px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 700ms linear infinite;
+.onb-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 150ms ease, transform 150ms ease;
+  pointer-events: none;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+.onb-slide.active {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
 
-.loading-step { font-weight: 500; }
+.onb-slide p {
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.onb-tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+.onb-cta { padding: 11px 24px; font-size: 14.5px; }
+
+.onb-dots {
+  position: absolute;
+  bottom: 44px;
+  display: flex;
+  gap: 8px;
+}
+
+.onb-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 150ms ease;
+}
+
+.onb-dots span.on { background: var(--accent); }
+
+/* -------------------------------------------------------- analysis mode */
+
+.analysis {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 250, 250, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadein 150ms ease;
+}
+
+@keyframes fadein { from { opacity: 0; } }
+
+.analysis-inner {
+  width: min(440px, 88vw);
+  text-align: center;
+}
 
 .loading-domain {
-  margin-top: 4px;
   font-family: var(--mono);
   font-size: 12.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin-bottom: 22px;
+}
+
+.loading-step {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-height: 26px;
+}
+
+.analysis-bar {
+  margin: 22px auto 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.analysis-bar span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(91, 91, 214, 0.55);
+  transition: width 600ms ease;
+}
+
+.analysis-checks {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.analysis-checks li {
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--faint);
+  padding-left: 16px;
+  position: relative;
+  transition: color 150ms ease;
+}
+
+.analysis-checks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  transition: all 150ms ease;
+}
+
+.analysis-checks li.done { color: var(--text); }
+
+.analysis-checks li.done::before {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface);
 }
 
 /* ---------------------------------------------------------------- cards */
@@ -356,6 +508,12 @@ body {
 
 .fact p {
   margin-top: 7px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.fact-text {
+  margin-top: 14px;
   color: var(--muted);
   font-size: 14px;
 }

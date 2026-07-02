@@ -25,18 +25,41 @@
       <a href="#exemple">Exemple</a>
       <a href="#tarifs">Tarifs</a>
     </nav>
-    <a class="btn btn-ghost nav-cta" href="#audit">Analyser mon site</a>
+    <a class="btn btn-ghost nav-cta" href="#audit">Lancer l'analyse</a>
   </header>
+
+  <!-- ====================================================== Onboarding -->
+  <div class="onboarding" id="onboarding" hidden>
+    <button class="onb-skip" id="onb-skip" type="button">Passer</button>
+    <div class="onb-stage">
+      <div class="onb-slide" data-step="0"><p>Pourquoi certains sites vendent mieux que d'autres&nbsp;?</p></div>
+      <div class="onb-slide" data-step="1"><p>Colle une URL et analyse sa stratégie.</p></div>
+      <div class="onb-slide" data-step="2">
+        <p>UX, copywriting, structure, conversion.</p>
+        <div class="onb-tags">
+          <span class="chip">UX</span><span class="chip">Copywriting</span><span class="chip">Structure</span><span class="chip">Conversion</span>
+        </div>
+      </div>
+      <div class="onb-slide" data-step="3"><p>Applique ces stratégies à ton business.</p></div>
+      <div class="onb-slide" data-step="4">
+        <p>Commencer</p>
+        <button class="btn btn-primary onb-cta" id="onb-start" type="button">Analyser un site</button>
+      </div>
+    </div>
+    <div class="onb-dots" id="onb-dots" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
 
   <main>
 
     <!-- ============================================================ Hero -->
     <section class="hero" id="audit">
-      <p class="hero-eyebrow">Reverse engineering de sites web</p>
-      <h1 class="hero-title">Comprends pourquoi ce site marche. Reproduis sa stratégie.</h1>
+      <p class="hero-eyebrow">Reverse engineering de business en ligne</p>
+      <h1 class="hero-title">Analyse n'importe quel site web et comprends pourquoi il vend.</h1>
       <p class="hero-sub">
-        Colle l'URL d'un concurrent ou d'un site que tu admires. Tu repars avec sa stratégie
-        décodée — acquisition, structure, copywriting — et un plan pour l'appliquer chez toi.
+        SaaS, e-commerce, landing pages — découvre les stratégies qui génèrent des résultats,
+        et applique-les à ton propre business.
       </p>
 
       <form class="url-form glass" id="analyze-form" autocomplete="off">
@@ -52,20 +75,26 @@
           spellcheck="false"
           required
         />
-        <button class="btn btn-primary" id="analyze-btn" type="submit">Décoder ce site</button>
+        <button class="btn btn-primary" id="analyze-btn" type="submit">Lancer l'analyse</button>
       </form>
       <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
       <p class="form-error" id="form-error" role="alert" hidden></p>
     </section>
 
-    <!-- ========================================================= Loading -->
-    <section class="loading" id="loading" hidden aria-live="polite">
-      <div class="loading-card glass">
-        <div class="spinner" aria-hidden="true"></div>
-        <p class="loading-step" id="loading-step">Lecture de la page…</p>
+    <!-- =================================================== Analysis mode -->
+    <div class="analysis" id="loading" hidden aria-live="polite">
+      <div class="analysis-inner">
         <p class="loading-domain" id="loading-domain"></p>
+        <p class="loading-step" id="loading-step">Analyse de la structure…</p>
+        <div class="analysis-bar"><span id="analysis-progress"></span></div>
+        <ul class="analysis-checks" id="analysis-checks">
+          <li>Structure</li>
+          <li>Copywriting</li>
+          <li>UX</li>
+          <li>Stratégie</li>
+        </ul>
       </div>
-    </section>
+    </div>
 
     <!-- ========================================================== Report -->
     <section class="report" id="report" hidden>
@@ -76,20 +105,32 @@
           <button class="btn btn-ghost btn-sm" id="new-audit">Décoder un autre site</button>
         </div>
         <h2 class="report-resume" id="r-resume"></h2>
-        <div class="chips" id="r-canaux"></div>
         <div class="report-vp">
-          <h3 class="card-label">Pourquoi ça marche</h3>
+          <h3 class="card-label">Pourquoi ça vend</h3>
           <p id="r-pourquoi"></p>
         </div>
       </div>
 
+      <div class="two-col">
+        <div class="card">
+          <h3 class="card-title">D'où vient le trafic</h3>
+          <div class="chips" id="r-sources"></div>
+          <p class="fact-text" id="r-trafic"></p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Technique</h3>
+          <p class="card-sub">Détecté dans le code de la page.</p>
+          <div class="chips" id="r-tech"></div>
+        </div>
+      </div>
+
       <div class="card">
-        <h3 class="card-title">Stratégie</h3>
-        <p class="card-sub">Comment ce site attire et convertit ses clients.</p>
+        <h3 class="card-title">Stratégie globale</h3>
+        <p class="card-sub">Comment ce business attire, convertit et fidélise.</p>
         <div class="fact-grid">
           <div class="fact">
-            <span class="card-label">Acquisition</span>
-            <p id="r-acquisition"></p>
+            <span class="card-label">Stratégie</span>
+            <p id="r-strategie"></p>
           </div>
           <div class="fact">
             <span class="card-label">Positionnement</span>
@@ -108,6 +149,17 @@
           <div class="fact"><span class="card-label">Copywriting</span><p data-site="copywriting"></p></div>
           <div class="fact"><span class="card-label">Éléments de confiance</span><p data-site="confiance"></p></div>
           <div class="fact"><span class="card-label">CTA</span><p data-site="cta"></p></div>
+        </div>
+      </div>
+
+      <div class="card" id="r-ecom-card" hidden>
+        <h3 class="card-title">Analyse e-commerce</h3>
+        <p class="card-sub">Offre, prix et mécaniques de panier.</p>
+        <div class="fact-grid">
+          <div class="fact"><span class="card-label">Offre</span><p data-ecom="offre"></p></div>
+          <div class="fact"><span class="card-label">Pricing</span><p data-ecom="pricing"></p></div>
+          <div class="fact"><span class="card-label">Upsells &amp; panier moyen</span><p data-ecom="upsells"></p></div>
+          <div class="fact"><span class="card-label">Friction à l'achat</span><p data-ecom="friction_achat"></p></div>
         </div>
       </div>
 

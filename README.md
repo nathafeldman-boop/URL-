@@ -1,15 +1,18 @@
 # Verdict
 
-Reverse engineering de stratégie de site web. Colle l'URL d'un concurrent ou d'un site que tu admires, reçois en ~40 secondes :
+Reverse engineering de business en ligne. Colle l'URL de n'importe quel site — SaaS, e-commerce, landing page — et comprends pourquoi il vend :
 
 - **le résumé du business** en une phrase
-- **la stratégie décodée** : acquisition, positionnement, leviers dominants, et le mécanisme qui explique son succès
-- **l'analyse du site** élément par élément : proposition de valeur, structure, UX, copywriting, éléments de confiance, CTA
+- **d'où vient le trafic** — déduit d'indices réels détectés dans le code (pixels Meta/TikTok, Google Analytics, Klaviyo, réseaux liés…)
+- **la technique** — CMS et outils détectés (Shopify, Webflow, Next.js, Stripe…)
+- **la stratégie globale** : comment il attire, convertit, fidélise ; positionnement ; mécanisme central
+- **l'analyse du site** : proposition de valeur, structure, UX, copywriting, éléments de confiance, CTA
+- **l'analyse e-commerce** (si applicable) : offre, pricing, upsells, friction à l'achat
 - **ce qui explique son succès** / **ce qui le limite** (format causal : élément → effet)
-- **5 éléments à copier** directement — structure, wording, sections, stratégie, idées
-- **un plan d'action en 3 étapes** pour appliquer tout ça à ton propre site
+- **5 éléments à copier** directement, typés (structure, wording, section, stratégie, idée)
+- **un plan d'action en 3 étapes** pour ton propre site
 
-Interface prête à vendre : landing marketing, section « comment ça marche », exemple de rapport et pricing intégrés.
+Expérience : onboarding animé (~9 s, une seule fois), mode analyse immersif, rapport en cards. Landing marketing et pricing intégrés.
 
 ## Lancer en local
 

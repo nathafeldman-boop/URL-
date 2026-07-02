@@ -10,14 +10,47 @@ const loadingDomain = document.getElementById("loading-domain");
 const reportEl = document.getElementById("report");
 
 const LOADING_STEPS = [
-  "Lecture de la page…",
-  "Décodage du positionnement…",
-  "Analyse de la stratégie d'acquisition…",
-  "Identification de ce qui fait vendre…",
-  "Rédaction de ton plan d'action…",
+  "Analyse de la structure…",
+  "Analyse du copywriting…",
+  "Analyse UX…",
+  "Détection de stratégie…",
 ];
 
 let stepTimer = null;
+let progressTimer = null;
+
+/* ------------------------------------------------------------ onboarding
+   Micro-expérience de bienvenue (~9 s), affichée une seule fois. */
+(function onboarding() {
+  const root = document.getElementById("onboarding");
+  if (localStorage.getItem("verdict_onboarded")) return;
+
+  const slides = [...root.querySelectorAll(".onb-slide")];
+  const dots = [...document.getElementById("onb-dots").children];
+  const DURATIONS = [2000, 2000, 3000, 2000];
+  let timer = null;
+
+  const show = (i) => {
+    slides.forEach((s, j) => s.classList.toggle("active", j === i));
+    dots.forEach((d, j) => d.classList.toggle("on", j <= i));
+    if (i < DURATIONS.length) timer = setTimeout(() => show(i + 1), DURATIONS[i]);
+  };
+
+  const close = () => {
+    clearTimeout(timer);
+    localStorage.setItem("verdict_onboarded", "1");
+    root.classList.add("closing");
+    setTimeout(() => {
+      root.hidden = true;
+      input.focus();
+    }, 160);
+  };
+
+  root.hidden = false;
+  show(0);
+  document.getElementById("onb-skip").addEventListener("click", close);
+  document.getElementById("onb-start").addEventListener("click", close);
+})();
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -53,23 +86,36 @@ document.getElementById("new-audit").addEventListener("click", () => {
 
 function startLoading(url) {
   btn.disabled = true;
-  btn.textContent = "Analyse en cours…";
   loadingDomain.textContent = url.replace(/^https?:\/\//, "").split("/")[0];
   loadingEl.hidden = false;
+
+  const checks = [...document.getElementById("analysis-checks").children];
+  checks.forEach((c) => c.classList.remove("done"));
+  const bar = document.getElementById("analysis-progress");
+  bar.style.width = "4%";
+
   let i = 0;
   loadingStep.textContent = LOADING_STEPS[0];
   stepTimer = setInterval(() => {
+    if (i < checks.length) checks[i].classList.add("done");
     i = Math.min(i + 1, LOADING_STEPS.length - 1);
     loadingStep.textContent = LOADING_STEPS[i];
-  }, 6000);
-  loadingEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 8000);
+
+  // La barre approche 90 % sans jamais l'atteindre — complétée à la réponse.
+  let p = 4;
+  progressTimer = setInterval(() => {
+    p += (90 - p) * 0.06;
+    bar.style.width = p.toFixed(1) + "%";
+  }, 600);
 }
 
 function stopLoading() {
   clearInterval(stepTimer);
-  loadingEl.hidden = true;
+  clearInterval(progressTimer);
+  document.getElementById("analysis-progress").style.width = "100%";
+  setTimeout(() => (loadingEl.hidden = true), 250);
   btn.disabled = false;
-  btn.textContent = "Lancer l'audit";
 }
 
 function setError(msg) {
@@ -77,26 +123,29 @@ function setError(msg) {
   errorEl.textContent = msg || "";
 }
 
-function renderReport({ url, report }) {
+function renderReport({ url, technologies, report }) {
   const r = report;
 
   document.getElementById("r-domain").textContent = new URL(url).hostname;
   document.getElementById("r-resume").textContent = r.resume;
   document.getElementById("r-pourquoi").textContent = r.strategie.pourquoi_ca_marche;
-  document.getElementById("r-acquisition").textContent = r.strategie.acquisition;
+  document.getElementById("r-strategie").textContent = r.strategie.globale;
   document.getElementById("r-positionnement").textContent = r.strategie.positionnement;
 
-  document.getElementById("r-canaux").replaceChildren(
-    ...r.strategie.canaux.map((label) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = label;
-      return chip;
-    })
-  );
+  fillChips("r-sources", r.trafic.sources);
+  document.getElementById("r-trafic").textContent = r.trafic.analyse;
+  fillChips("r-tech", technologies?.length ? technologies : ["Rien de notable détecté"]);
 
   for (const el of document.querySelectorAll("#r-site [data-site]")) {
     el.textContent = r.analyse_site[el.dataset.site] || "—";
+  }
+
+  const ecomCard = document.getElementById("r-ecom-card");
+  ecomCard.hidden = !r.ecommerce;
+  if (r.ecommerce) {
+    for (const el of ecomCard.querySelectorAll("[data-ecom]")) {
+      el.textContent = r.ecommerce[el.dataset.ecom] || "—";
+    }
   }
 
   fillList("r-forts", r.points_forts);
@@ -122,6 +171,17 @@ function renderReport({ url, report }) {
 
   reportEl.hidden = false;
   reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function fillChips(id, labels) {
+  document.getElementById(id).replaceChildren(
+    ...(labels || []).map((label) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = label;
+      return chip;
+    })
+  );
 }
 
 function fillList(id, items) {
