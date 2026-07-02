@@ -274,31 +274,6 @@ function renderReport({ url, technologies, metrics, report }) {
 
   fillList("r-forts", r.points_forts);
   fillList("r-faibles", r.points_faibles);
-  fillDetailList("r-copier", r.a_copier);
-
-  const plan = document.getElementById("r-plan");
-  plan.replaceChildren(
-    ...r.plan_action.map((step, i) => {
-      const div = document.createElement("div");
-      div.className = "plan-step";
-      const num = document.createElement("span");
-      num.className = "step-num";
-      num.textContent = step.etape || i + 1;
-      const title = document.createElement("b");
-      title.textContent = step.titre;
-      const detail = document.createElement("p");
-      detail.textContent = step.detail;
-      div.append(num, title, detail);
-      if (step.impact) {
-        const impact = document.createElement("span");
-        impact.className = "impact-chip";
-        impact.textContent = step.impact;
-        impact.title = "Estimation";
-        div.append(impact);
-      }
-      return div;
-    })
-  );
 
   reportEl.hidden = false;
   reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -437,25 +412,3 @@ function fillList(id, items) {
   );
 }
 
-function fillDetailList(id, items) {
-  const ol = document.getElementById(id);
-  ol.replaceChildren(
-    ...(items || []).map((item) => {
-      const li = document.createElement("li");
-      const box = document.createElement("div");
-      const title = document.createElement("b");
-      title.textContent = item.titre;
-      if (item.type) {
-        const tag = document.createElement("span");
-        tag.className = "item-type";
-        tag.textContent = item.type;
-        title.append(tag);
-      }
-      const detail = document.createElement("p");
-      detail.textContent = item.detail;
-      box.append(title, detail);
-      li.append(box);
-      return li;
-    })
-  );
-}
