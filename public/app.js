@@ -16,8 +16,17 @@ const LOADING_STEPS = [
   "Détection de stratégie…",
 ];
 
+const COMPARE_STEPS = [
+  "Analyse de ton site…",
+  "Comparaison des propositions de valeur…",
+  "Comparaison des tunnels de conversion…",
+  "Rédaction de tes priorités…",
+];
+
 let stepTimer = null;
 let progressTimer = null;
+// Dernière analyse concurrent, réutilisée par la comparaison.
+let lastAnalysis = null;
 
 /* ------------------------------------------------------------ onboarding
    Micro-expérience de bienvenue (~9 s), affichée une seule fois. */
@@ -79,12 +88,110 @@ form.addEventListener("submit", async (e) => {
 
 document.getElementById("new-audit").addEventListener("click", () => {
   reportEl.hidden = true;
+  document.getElementById("compare").hidden = true;
   input.value = "";
   input.focus();
   document.getElementById("audit").scrollIntoView({ behavior: "smooth" });
 });
 
-function startLoading(url) {
+/* ----------------------------------------------------------- comparaison */
+
+const compareForm = document.getElementById("compare-form");
+const compareInput = document.getElementById("compare-input");
+const compareBtn = document.getElementById("compare-btn");
+const compareErrorEl = document.getElementById("compare-error");
+const compareEl = document.getElementById("compare");
+
+compareForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const raw = compareInput.value.trim();
+  if (!raw || !lastAnalysis) return;
+
+  compareErrorEl.hidden = true;
+  compareEl.hidden = true;
+  compareBtn.disabled = true;
+  startLoading(raw, COMPARE_STEPS);
+
+  try {
+    const resp = await fetch("/api/compare", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: raw, competitor: { url: lastAnalysis.url, report: lastAnalysis.report } }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "La comparaison a échoué. Réessaie.");
+    renderCompare(data);
+  } catch (err) {
+    compareErrorEl.hidden = false;
+    compareErrorEl.textContent = err.message === "Failed to fetch" ? "Connexion au serveur impossible." : err.message;
+  } finally {
+    stopLoading();
+    compareBtn.disabled = false;
+  }
+});
+
+function renderCompare({ url, competitorUrl, comparison }) {
+  const c = comparison;
+
+  document.getElementById("c-domains").textContent =
+    new URL(url).hostname + "  vs  " + new URL(competitorUrl).hostname;
+  document.getElementById("c-verdict").textContent = c.verdict;
+
+  document.getElementById("c-ecarts").replaceChildren(
+    ...c.ecarts.map((gap) => {
+      const item = document.createElement("div");
+      item.className = "gap";
+
+      const domaine = document.createElement("span");
+      domaine.className = "gap-domain chip";
+      domaine.textContent = gap.domaine;
+
+      const cols = document.createElement("div");
+      cols.className = "gap-cols";
+      for (const [label, text] of [["Le concurrent", gap.concurrent], ["Toi", gap.toi]]) {
+        const col = document.createElement("div");
+        col.className = "fact";
+        const lab = document.createElement("span");
+        lab.className = "card-label";
+        lab.textContent = label;
+        const p = document.createElement("p");
+        p.textContent = text;
+        col.append(lab, p);
+        cols.append(col);
+      }
+
+      const action = document.createElement("p");
+      action.className = "gap-action";
+      action.textContent = gap.action;
+
+      item.append(domaine, cols, action);
+      return item;
+    })
+  );
+
+  fillList("c-garder", c.a_garder);
+
+  document.getElementById("c-priorites").replaceChildren(
+    ...c.priorites.map((step, i) => {
+      const div = document.createElement("div");
+      div.className = "plan-step";
+      const num = document.createElement("span");
+      num.className = "step-num";
+      num.textContent = step.etape || i + 1;
+      const title = document.createElement("b");
+      title.textContent = step.titre;
+      const detail = document.createElement("p");
+      detail.textContent = step.detail;
+      div.append(num, title, detail);
+      return div;
+    })
+  );
+
+  compareEl.hidden = false;
+  compareEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function startLoading(url, steps = LOADING_STEPS) {
   btn.disabled = true;
   loadingDomain.textContent = url.replace(/^https?:\/\//, "").split("/")[0];
   loadingEl.hidden = false;
@@ -95,11 +202,11 @@ function startLoading(url) {
   bar.style.width = "4%";
 
   let i = 0;
-  loadingStep.textContent = LOADING_STEPS[0];
+  loadingStep.textContent = steps[0];
   stepTimer = setInterval(() => {
     if (i < checks.length) checks[i].classList.add("done");
-    i = Math.min(i + 1, LOADING_STEPS.length - 1);
-    loadingStep.textContent = LOADING_STEPS[i];
+    i = Math.min(i + 1, steps.length - 1);
+    loadingStep.textContent = steps[i];
   }, 8000);
 
   // La barre approche 90 % sans jamais l'atteindre — complétée à la réponse.
@@ -125,6 +232,13 @@ function setError(msg) {
 
 function renderReport({ url, technologies, report }) {
   const r = report;
+  lastAnalysis = { url, report };
+
+  // Réinitialise l'étape comparaison pour ce nouveau concurrent
+  document.getElementById("compare").hidden = true;
+  document.getElementById("compare-error").hidden = true;
+  document.getElementById("compare-input").value = "";
+  document.getElementById("cc-domain").textContent = new URL(url).hostname;
 
   document.getElementById("r-domain").textContent = new URL(url).hostname;
   document.getElementById("r-resume").textContent = r.resume;

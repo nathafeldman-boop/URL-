@@ -175,9 +175,66 @@
       </div>
 
       <div class="card plan">
-        <h3 class="card-title">Plan d'action pour ton site</h3>
-        <p class="card-sub">Trois étapes basées sur ce qui a été observé. Commence cette semaine.</p>
+        <h3 class="card-title">Plan d'action</h3>
+        <p class="card-sub">Trois étapes pour reproduire cette stratégie.</p>
         <div class="plan-steps" id="r-plan"></div>
+      </div>
+
+      <div class="card compare-cta" id="compare-cta">
+        <h3 class="compare-cta-title">Et ton site, il tient la comparaison&nbsp;?</h3>
+        <p class="compare-cta-sub">
+          Analyse ton propre site et compare-le à <span class="cc-domain" id="cc-domain"></span>
+          pour savoir exactement quoi changer pour vendre autant.
+        </p>
+        <form class="url-form glass compare-form" id="compare-form" autocomplete="off">
+          <svg class="url-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M8.5 11.5a4 4 0 005.66 0l2.34-2.34a4 4 0 00-5.66-5.66l-1.17 1.17M11.5 8.5a4 4 0 00-5.66 0L3.5 10.84a4 4 0 005.66 5.66l1.17-1.17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input
+            id="compare-input"
+            type="text"
+            inputmode="url"
+            placeholder="tonsite.com"
+            aria-label="URL de ton site"
+            spellcheck="false"
+            required
+          />
+          <button class="btn btn-primary" id="compare-btn" type="submit">Comparer avec mon site</button>
+        </form>
+        <p class="form-error" id="compare-error" role="alert" hidden></p>
+      </div>
+
+    </section>
+
+    <!-- ====================================================== Comparaison -->
+    <section class="report compare" id="compare" hidden>
+
+      <div class="report-head card">
+        <div class="report-head-top">
+          <span class="report-domain" id="c-domains"></span>
+        </div>
+        <h2 class="report-resume">Ton site face au concurrent</h2>
+        <div class="report-vp">
+          <h3 class="card-label">Verdict</h3>
+          <p id="c-verdict"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Ce qu'il faut changer</h3>
+        <p class="card-sub">Cinq écarts classés par impact sur les ventes.</p>
+        <div class="gaps" id="c-ecarts"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><span class="dot dot-good"></span>Ce que ton site fait déjà bien</h3>
+        <ul class="check-list good" id="c-garder"></ul>
+      </div>
+
+      <div class="card plan">
+        <h3 class="card-title">Tes 3 priorités</h3>
+        <p class="card-sub">Les changements qui te rapprochent le plus des ventes du concurrent.</p>
+        <div class="plan-steps" id="c-priorites"></div>
       </div>
 
     </section>

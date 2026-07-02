@@ -10,7 +10,7 @@ const path = require("node:path");
 
 loadDotEnv();
 
-const { analyze } = require("./lib/audit");
+const { analyze, compare } = require("./lib/audit");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -39,14 +39,17 @@ function loadDotEnv() {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "POST" && req.url === "/api/analyze") {
+    if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare")) {
       let payload;
       try {
-        payload = JSON.parse(await readBody(req));
+        payload = JSON.parse(await readBody(req, 256 * 1024));
       } catch {
         return sendJson(res, 400, { error: "Corps de requête invalide." });
       }
-      const { status, body } = await analyze(payload.url);
+      const { status, body } =
+        req.url === "/api/compare"
+          ? await compare(payload.url, payload.competitor)
+          : await analyze(payload.url);
       return sendJson(res, status, body);
     }
     if (req.method === "GET" || req.method === "HEAD") {
