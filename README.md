@@ -55,6 +55,9 @@ public/
 |---|---|---|
 | `MISTRAL_API_KEY` | — (requis) | Clé API Mistral |
 | `MISTRAL_MODEL` | `mistral-large-latest` | Modèle utilisé pour l'audit |
+| `STRIPE_SECRET_KEY` | — | Clé secrète Stripe (active le bouton « Passer en Pro », 15 €/mois) |
+| `STRIPE_PRODUCT_ID` | `prod_UoUCJGRo2tMb6B` | Produit Stripe dont le prix par défaut est facturé |
+| `STRIPE_PRICE_ID` | — | Optionnel : ID prix (`price_…`) qui court-circuite la résolution produit |
 | `PORT` | `3000` | Port du serveur |
 
 ## Limites connues (MVP)

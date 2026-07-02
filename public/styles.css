@@ -1003,6 +1003,18 @@ body {
   align-items: stretch;
 }
 
+.pricing-solo {
+  grid-template-columns: minmax(0, 400px);
+  justify-content: center;
+}
+
+.price-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--faint);
+  text-align: center;
+}
+
 .price-card {
   display: flex;
   flex-direction: column;

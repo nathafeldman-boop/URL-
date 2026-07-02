@@ -11,6 +11,7 @@ const path = require("node:path");
 loadDotEnv();
 
 const { analyze, compare } = require("./lib/audit");
+const { createCheckout } = require("./lib/checkout");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -50,6 +51,14 @@ const server = http.createServer(async (req, res) => {
         req.url === "/api/compare"
           ? await compare(payload.url, payload.competitor)
           : await analyze(payload.url);
+      return sendJson(res, status, body);
+    }
+    if (req.method === "GET" && req.url.split("?")[0] === "/api/checkout") {
+      const { status, redirectUrl, body } = await createCheckout(`http://localhost:${PORT}`);
+      if (redirectUrl) {
+        res.writeHead(status, { Location: redirectUrl });
+        return res.end();
+      }
       return sendJson(res, status, body);
     }
     if (req.method === "GET" || req.method === "HEAD") {
