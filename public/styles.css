@@ -216,6 +216,80 @@ body {
   flex-wrap: wrap;
 }
 
+/* --------------------------------------------------------- hero vidéo */
+
+.hero-video {
+  position: relative;
+  max-width: none;
+  padding: 150px 24px 170px;
+  overflow: hidden;
+  background: #0b1c38;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 32%;
+}
+
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 18, 38, 0.5) 0%,
+    rgba(8, 18, 38, 0.28) 55%,
+    rgba(250, 250, 250, 0.9) 92%,
+    var(--bg) 100%
+  );
+}
+
+.hero-content {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-video .hero-eyebrow {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-video .hero-title {
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(8, 18, 38, 0.35);
+}
+
+.hero-video .hero-sub {
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 12px rgba(8, 18, 38, 0.35);
+}
+
+.hero-video .hero-note { color: rgba(255, 255, 255, 0.65); }
+
+.btn-hero-ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-hero-ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg { display: none; }
+  .hero-video { background: #0b1c38 url("/assets/hero-poster.webp") center 32% / cover no-repeat; }
+}
+
 .btn-lg { padding: 11px 24px; font-size: 14.5px; }
 
 /* Page app : écran focalisé sur l'input */

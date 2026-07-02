@@ -23,7 +23,6 @@
     <nav class="nav-links">
       <a href="#comment">Comment ça marche</a>
       <a href="#exemple">Exemple</a>
-      <a href="#tarifs">Tarifs</a>
     </nav>
     <a class="btn btn-ghost nav-cta" href="/app">Lancer l'analyse</a>
   </header>
@@ -32,31 +31,24 @@
   <main>
 
     <!-- ============================================================ Hero -->
-    <section class="hero">
-      <p class="hero-eyebrow">Reverse engineering de business en ligne</p>
-      <h1 class="hero-title">Analyse n'importe quel site web et comprends pourquoi il vend.</h1>
-      <p class="hero-sub">
-        SaaS, e-commerce, landing pages — découvre les stratégies qui génèrent des résultats,
-        et applique-les à ton propre business.
-      </p>
-
-      <div class="hero-actions">
-        <a href="/app" class="btn btn-primary btn-lg">Lancer l'analyse</a>
-        <a href="#exemple" class="btn btn-ghost btn-lg">Voir un exemple</a>
+    <section class="hero hero-video">
+      <video class="hero-bg" autoplay muted loop playsinline preload="metadata" poster="/assets/hero-poster.webp" aria-hidden="true">
+        <source src="/assets/hero-bg.mp4" type="video/mp4" />
+      </video>
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">Reverse engineering de business en ligne</p>
+        <h1 class="hero-title">Analyse n'importe quel site web et comprends pourquoi il vend.</h1>
+        <p class="hero-sub">
+          SaaS, e-commerce, landing pages — découvre les stratégies qui génèrent des résultats,
+          et applique-les à ton propre business.
+        </p>
+        <div class="hero-actions">
+          <a href="/app" class="btn btn-primary btn-lg">Lancer l'analyse</a>
+          <a href="#exemple" class="btn btn-hero-ghost btn-lg">Voir un exemple</a>
+        </div>
+        <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
       </div>
-      <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
-
-      <figure class="hero-visual">
-        <img src="/assets/hero.webp" alt="" width="992" height="496" fetchpriority="high" />
-        <figcaption class="hv-card hv-left glass">
-          <span class="card-label">D'où vient le trafic</span>
-          <span class="chips"><span class="chip">Meta Ads</span><span class="chip">SEO</span><span class="chip">Email</span></span>
-        </figcaption>
-        <figcaption class="hv-card hv-right glass">
-          <span class="card-label">À copier — wording</span>
-          <p>« Livraison offerte dès 50 € » → panier moyen tiré vers le haut</p>
-        </figcaption>
-      </figure>
     </section>
 
 
@@ -112,64 +104,11 @@
       </div>
     </section>
 
-    <!-- =========================================================== Tarifs -->
-    <section class="section" id="tarifs">
-      <h2 class="section-title">Tarifs simples</h2>
-      <p class="section-sub">Moins cher qu'une heure de consultant. Résiliable en un clic.</p>
-      <div class="pricing">
-        <div class="price-card card">
-          <h3>Découverte</h3>
-          <p class="price"><b>0 €</b></p>
-          <p class="price-desc">Pour voir ce que ça donne.</p>
-          <ul>
-            <li>3 décodages par mois</li>
-            <li>Stratégie + analyse complète du site</li>
-            <li>Plan d'action en 3 étapes</li>
-          </ul>
-          <a href="/app" class="btn btn-ghost">Commencer</a>
-        </div>
-        <div class="price-card card featured">
-          <span class="price-badge">Le plus choisi</span>
-          <h3>Pro</h3>
-          <p class="price"><b>29 €</b><span>/mois</span></p>
-          <p class="price-desc">Pour les fondateurs qui veulent dominer leur marché.</p>
-          <ul>
-            <li>Décodages illimités</li>
-            <li>Toute la stratégie de tes concurrents, site par site</li>
-            <li>Historique et comparaisons</li>
-            <li>Export PDF à partager</li>
-          </ul>
-          <a href="/app" class="btn btn-primary">Essayer 7 jours</a>
-        </div>
-        <div class="price-card card">
-          <h3>Agence</h3>
-          <p class="price"><b>79 €</b><span>/mois</span></p>
-          <p class="price-desc">Pour décoder des marchés entiers pour vos clients.</p>
-          <ul>
-            <li>Tout le plan Pro</li>
-            <li>Rapports en marque blanche</li>
-            <li>5 sièges inclus</li>
-          </ul>
-          <a href="/app" class="btn btn-ghost">Nous contacter</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ======================================================== CTA final -->
-    <section class="cta-band">
-      <div class="cta-band-inner">
-        <h2 class="section-title">Les meilleurs sites n'ont pas de secret.<br />Ils ont une stratégie.</h2>
-        <p class="section-sub">Colle une URL. Dans 40 secondes, tu sauras laquelle.</p>
-        <a href="/app" class="btn btn-primary cta-band-btn">Lancer l'analyse</a>
-      </div>
-    </section>
-
   </main>
 
   <footer class="footer">
     <span>© 2026 Verdict</span>
     <nav>
-      <a href="#tarifs">Tarifs</a>
       <a href="mailto:hello@verdict.app">Contact</a>
     </nav>
   </footer>
