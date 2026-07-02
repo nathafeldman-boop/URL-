@@ -292,6 +292,33 @@ body {
 
 .btn-lg { padding: 11px 24px; font-size: 14.5px; }
 
+/* Fonds de page de l'app : escalier à l'accueil, ciel sur les résultats */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.page-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(250, 250, 250, 0.86), rgba(250, 250, 250, 0.93));
+}
+
+.bg-stairs { background-image: url("/assets/bg-stairs.webp"); }
+
+.bg-sky {
+  background-image: url("/assets/bg-sky.webp");
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+body.report-view .bg-sky { opacity: 1; }
+
 /* Page app : écran focalisé sur l'input */
 .app-hero { padding-top: 120px; padding-bottom: 64px; }
 

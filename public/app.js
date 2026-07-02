@@ -90,6 +90,7 @@ document.getElementById("new-audit").addEventListener("click", () => {
   reportEl.hidden = true;
   document.getElementById("compare").hidden = true;
   document.getElementById("app-visual").hidden = false;
+  document.body.classList.remove("report-view");
   input.value = "";
   input.focus();
   document.getElementById("audit").scrollIntoView({ behavior: "smooth" });
@@ -235,6 +236,7 @@ function renderReport({ url, technologies, metrics, report }) {
   const r = report;
   lastAnalysis = { url, report };
   document.getElementById("app-visual").hidden = true;
+  document.body.classList.add("report-view");
 
   renderGauges(r.scores);
   renderMetrics(metrics);
