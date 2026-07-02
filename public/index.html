@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Verdict — Ce qui bloque tes conversions, noir sur blanc</title>
-  <meta name="description" content="Colle l'URL de ta landing page. Reçois un audit complet — proposition de valeur, UX, copywriting, conversion — avec un plan d'action concret." />
+  <title>Verdict — Comprends pourquoi un site marche. Reproduis sa stratégie.</title>
+  <meta name="description" content="Colle l'URL d'un concurrent ou d'un site que tu admires. Verdict décode sa stratégie — acquisition, positionnement, structure, copywriting — et te donne un plan pour l'appliquer à ton business." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235B5BD6'/><path d='M9 11l7 11 7-11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -32,11 +32,11 @@
 
     <!-- ============================================================ Hero -->
     <section class="hero" id="audit">
-      <p class="hero-eyebrow">Audit de conversion pour landing pages</p>
-      <h1 class="hero-title">Ce qui bloque tes conversions,<br />noir sur blanc.</h1>
+      <p class="hero-eyebrow">Reverse engineering de sites web</p>
+      <h1 class="hero-title">Comprends pourquoi ce site marche. Reproduis sa stratégie.</h1>
       <p class="hero-sub">
-        Colle l'URL de ta page. En moins d'une minute, tu sais ce qui fonctionne,
-        ce qui fait fuir tes visiteurs, et quoi corriger en premier.
+        Colle l'URL d'un concurrent ou d'un site que tu admires. Tu repars avec sa stratégie
+        décodée — acquisition, structure, copywriting — et un plan pour l'appliquer chez toi.
       </p>
 
       <form class="url-form glass" id="analyze-form" autocomplete="off">
@@ -47,14 +47,14 @@
           id="url-input"
           type="text"
           inputmode="url"
-          placeholder="tonsite.com"
-          aria-label="URL de ta landing page"
+          placeholder="concurrent.com"
+          aria-label="URL du site à décoder"
           spellcheck="false"
           required
         />
-        <button class="btn btn-primary" id="analyze-btn" type="submit">Lancer l'audit</button>
+        <button class="btn btn-primary" id="analyze-btn" type="submit">Décoder ce site</button>
       </form>
-      <p class="hero-note">Aucun compte requis pour le premier audit. Résultats en ~40 secondes.</p>
+      <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
       <p class="form-error" id="form-error" role="alert" hidden></p>
     </section>
 
@@ -73,59 +73,64 @@
       <div class="report-head card">
         <div class="report-head-top">
           <span class="report-domain" id="r-domain"></span>
-          <button class="btn btn-ghost btn-sm" id="new-audit">Nouvel audit</button>
+          <button class="btn btn-ghost btn-sm" id="new-audit">Décoder un autre site</button>
         </div>
         <h2 class="report-resume" id="r-resume"></h2>
+        <div class="chips" id="r-canaux"></div>
         <div class="report-vp">
-          <h3 class="card-label">Proposition de valeur</h3>
-          <p id="r-vp"></p>
+          <h3 class="card-label">Pourquoi ça marche</h3>
+          <p id="r-pourquoi"></p>
         </div>
       </div>
 
-      <div class="scores" id="r-scores">
-        <div class="card score-card">
-          <span class="card-label">UX</span>
-          <span class="score-num"><b data-score="ux">–</b><i>/10</i></span>
-          <span class="score-bar"><span data-bar="ux"></span></span>
+      <div class="card">
+        <h3 class="card-title">Stratégie</h3>
+        <p class="card-sub">Comment ce site attire et convertit ses clients.</p>
+        <div class="fact-grid">
+          <div class="fact">
+            <span class="card-label">Acquisition</span>
+            <p id="r-acquisition"></p>
+          </div>
+          <div class="fact">
+            <span class="card-label">Positionnement</span>
+            <p id="r-positionnement"></p>
+          </div>
         </div>
-        <div class="card score-card">
-          <span class="card-label">Copywriting</span>
-          <span class="score-num"><b data-score="copywriting">–</b><i>/10</i></span>
-          <span class="score-bar"><span data-bar="copywriting"></span></span>
-        </div>
-        <div class="card score-card">
-          <span class="card-label">Conversion</span>
-          <span class="score-num"><b data-score="conversion">–</b><i>/10</i></span>
-          <span class="score-bar"><span data-bar="conversion"></span></span>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Analyse du site</h3>
+        <p class="card-sub">Ce que la page fait, élément par élément.</p>
+        <div class="fact-grid two" id="r-site">
+          <div class="fact"><span class="card-label">Proposition de valeur</span><p data-site="proposition_valeur"></p></div>
+          <div class="fact"><span class="card-label">Structure</span><p data-site="structure"></p></div>
+          <div class="fact"><span class="card-label">UX</span><p data-site="ux"></p></div>
+          <div class="fact"><span class="card-label">Copywriting</span><p data-site="copywriting"></p></div>
+          <div class="fact"><span class="card-label">Éléments de confiance</span><p data-site="confiance"></p></div>
+          <div class="fact"><span class="card-label">CTA</span><p data-site="cta"></p></div>
         </div>
       </div>
 
       <div class="two-col">
         <div class="card">
-          <h3 class="card-title"><span class="dot dot-good"></span>Points forts</h3>
+          <h3 class="card-title"><span class="dot dot-good"></span>Ce qui explique son succès</h3>
           <ul class="check-list good" id="r-forts"></ul>
         </div>
         <div class="card">
-          <h3 class="card-title"><span class="dot dot-bad"></span>Points faibles</h3>
+          <h3 class="card-title"><span class="dot dot-bad"></span>Ce qui le limite</h3>
           <ul class="check-list bad" id="r-faibles"></ul>
         </div>
       </div>
 
       <div class="card">
-        <h3 class="card-title">5 améliorations prioritaires</h3>
-        <p class="card-sub">Classées par impact sur la conversion.</p>
-        <ol class="num-list" id="r-ameliorations"></ol>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">3 éléments à copier</h3>
-        <p class="card-sub">Ce que cette page fait bien — à répliquer sur tes autres pages.</p>
+        <h3 class="card-title">À copier pour ton site</h3>
+        <p class="card-sub">Cinq éléments directement réutilisables — structure, wording, sections, stratégie.</p>
         <ol class="num-list alt" id="r-copier"></ol>
       </div>
 
       <div class="card plan">
-        <h3 class="card-title">Plan d'action</h3>
-        <p class="card-sub">Trois étapes, dans l'ordre. Commence cette semaine.</p>
+        <h3 class="card-title">Plan d'action pour ton site</h3>
+        <p class="card-sub">Trois étapes basées sur ce qui a été observé. Commence cette semaine.</p>
         <div class="plan-steps" id="r-plan"></div>
       </div>
 
@@ -133,52 +138,51 @@
 
     <!-- ============================================== Comment ça marche -->
     <section class="section" id="comment">
-      <h2 class="section-title">Un audit sérieux, sans rendez-vous</h2>
-      <p class="section-sub">Ce qu'un consultant CRO te facturerait 400 €, en 40 secondes.</p>
+      <h2 class="section-title">De l'URL au plan d'action</h2>
+      <p class="section-sub">Ce qu'un consultant en stratégie te facturerait 400 €, en 40 secondes.</p>
       <div class="steps">
         <div class="step card">
           <span class="step-num">1</span>
-          <h3>Colle ton URL</h3>
-          <p>N'importe quelle landing page publique. Pas de script à installer, pas d'accès à donner.</p>
+          <h3>Colle l'URL d'un site qui marche</h3>
+          <p>Un concurrent, un leader de ton marché, un site dont tu envies les résultats.</p>
         </div>
         <div class="step card">
           <span class="step-num">2</span>
-          <h3>On lit ta page comme un visiteur</h3>
-          <p>Proposition de valeur, structure, titres, CTA, preuve sociale : tout est passé au crible.</p>
+          <h3>On décode sa stratégie</h3>
+          <p>Acquisition, positionnement, structure, copywriting, éléments de confiance, CTA : chaque mécanisme est expliqué.</p>
         </div>
         <div class="step card">
           <span class="step-num">3</span>
-          <h3>Tu repars avec un plan</h3>
-          <p>Des scores honnêtes, 5 corrections classées par impact, et 3 étapes à exécuter cette semaine.</p>
+          <h3>Tu reproduis ce qui fonctionne</h3>
+          <p>Cinq éléments à copier tels quels, et un plan en 3 étapes pour les appliquer à ton propre site.</p>
         </div>
       </div>
     </section>
 
     <!-- ========================================================== Exemple -->
     <section class="section" id="exemple">
-      <h2 class="section-title">À quoi ressemble un audit</h2>
+      <h2 class="section-title">À quoi ressemble un décodage</h2>
       <p class="section-sub">Extrait réel du rapport que tu reçois.</p>
       <div class="demo card">
         <div class="demo-head">
           <span class="report-domain">acme-saas.com</span>
-          <div class="demo-scores">
-            <span>UX <b>7</b></span>
-            <span>Copy <b>5</b></span>
-            <span>Conversion <b>4</b></span>
+          <div class="chips">
+            <span class="chip">Product-led</span>
+            <span class="chip">Contenu</span>
           </div>
         </div>
         <div class="demo-body">
           <div class="demo-item">
-            <span class="demo-tag">Amélioration nº1</span>
-            <p><b>Réécris ton titre principal autour du résultat client.</b> « La plateforme tout-en-un » ne dit rien. « Encaisse tes factures 2× plus vite » donne une raison de rester.</p>
+            <span class="demo-tag">Pourquoi ça marche</span>
+            <p><b>L'essai gratuit sans carte bancaire fait le travail de vente.</b> Le produit convertit à la place des commerciaux → coût d'acquisition minimal, croissance qui s'auto-alimente.</p>
           </div>
           <div class="demo-item">
-            <span class="demo-tag">Amélioration nº2</span>
-            <p><b>Un seul CTA au-dessus de la ligne de flottaison.</b> Trois boutons qui se battent (« Démo », « Essai », « Contact ») divisent tes clics par trois. Garde « Essayer gratuitement ».</p>
+            <span class="demo-tag">À copier — structure</span>
+            <p><b>La page suit problème → solution → preuve → action.</b> Chaque section répond à l'objection née dans la précédente. Reprends cet enchaînement tel quel sur ta home.</p>
           </div>
           <div class="demo-item">
-            <span class="demo-tag">À copier</span>
-            <p><b>La preuve sociale placée sous le formulaire.</b> Les logos clients juste sous le champ email lèvent l'objection au bon moment. Réplique ça sur ta page pricing.</p>
+            <span class="demo-tag">À copier — wording</span>
+            <p><b>« Encaisse tes factures 2× plus vite » au lieu de « plateforme tout-en-un ».</b> Un chiffre + un résultat concret dans le titre → le visiteur sait en 3 secondes ce qu'il gagne.</p>
           </div>
         </div>
       </div>
@@ -194,8 +198,8 @@
           <p class="price"><b>0 €</b></p>
           <p class="price-desc">Pour voir ce que ça donne.</p>
           <ul>
-            <li>3 audits par mois</li>
-            <li>Scores UX, copy, conversion</li>
+            <li>3 décodages par mois</li>
+            <li>Stratégie + analyse complète du site</li>
             <li>Plan d'action en 3 étapes</li>
           </ul>
           <a href="#audit" class="btn btn-ghost">Commencer</a>
@@ -204,11 +208,11 @@
           <span class="price-badge">Le plus choisi</span>
           <h3>Pro</h3>
           <p class="price"><b>29 €</b><span>/mois</span></p>
-          <p class="price-desc">Pour les fondateurs qui itèrent chaque semaine.</p>
+          <p class="price-desc">Pour les fondateurs qui veulent dominer leur marché.</p>
           <ul>
-            <li>Audits illimités</li>
-            <li>Historique et comparaison avant / après</li>
-            <li>Audit des pages concurrentes</li>
+            <li>Décodages illimités</li>
+            <li>Toute la stratégie de tes concurrents, site par site</li>
+            <li>Historique et comparaisons</li>
             <li>Export PDF à partager</li>
           </ul>
           <a href="#audit" class="btn btn-primary">Essayer 7 jours</a>
@@ -216,7 +220,7 @@
         <div class="price-card card">
           <h3>Agence</h3>
           <p class="price"><b>79 €</b><span>/mois</span></p>
-          <p class="price-desc">Pour auditer les sites de vos clients.</p>
+          <p class="price-desc">Pour décoder des marchés entiers pour vos clients.</p>
           <ul>
             <li>Tout le plan Pro</li>
             <li>Rapports en marque blanche</li>

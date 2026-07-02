@@ -146,6 +146,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.12;
+  text-wrap: balance;
 }
 
 .hero-sub {
@@ -330,46 +331,33 @@ body {
 
 .report-vp p { margin-top: 8px; color: var(--muted); }
 
-.scores {
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.fact-grid {
+  margin-top: 20px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 28px;
 }
 
-.score-card { padding: 22px 24px; }
-
-.score-num {
-  display: block;
-  margin: 10px 0 14px;
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.score-num i {
-  font-style: normal;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--faint);
-  margin-left: 3px;
-}
-
-.score-bar {
-  display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-.score-bar span {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: 2px;
-  background: var(--accent);
-  transition: width 500ms cubic-bezier(0.2, 0.7, 0.3, 1) 150ms;
+.fact p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .two-col {
@@ -460,6 +448,21 @@ body {
 }
 
 .num-list li p { color: var(--muted); font-size: 14px; }
+
+.item-type {
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
 
 .plan-steps {
   margin-top: 20px;
@@ -552,18 +555,7 @@ body {
   background: var(--bg);
 }
 
-.demo-scores {
-  display: flex;
-  gap: 18px;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-
-.demo-scores b {
-  color: var(--text);
-  font-weight: 600;
-  margin-left: 4px;
-}
+.demo-head .chips { margin-top: 0; }
 
 .demo-body { padding: 8px 24px; }
 
@@ -695,6 +687,6 @@ body {
   .url-form { flex-wrap: wrap; padding: 10px; }
   .url-form input { flex-basis: 100%; padding: 6px 8px; }
   .url-form .btn { flex: 1; }
-  .scores, .two-col, .steps, .pricing, .plan-steps { grid-template-columns: 1fr; }
+  .fact-grid, .two-col, .steps, .pricing, .plan-steps { grid-template-columns: 1fr; }
   .price-card.featured { order: -1; }
 }

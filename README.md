@@ -1,13 +1,13 @@
 # Verdict
 
-Audit de conversion pour landing pages. Colle une URL, reçois en ~40 secondes :
+Reverse engineering de stratégie de site web. Colle l'URL d'un concurrent ou d'un site que tu admires, reçois en ~40 secondes :
 
-- un résumé du site en une phrase et sa proposition de valeur
-- trois scores honnêtes : **UX**, **Copywriting**, **Conversion** (0–10)
-- points forts / points faibles
-- **5 améliorations prioritaires** classées par impact
-- **3 éléments à copier** sur tes autres pages
-- un **plan d'action en 3 étapes**
+- **le résumé du business** en une phrase
+- **la stratégie décodée** : acquisition, positionnement, leviers dominants, et le mécanisme qui explique son succès
+- **l'analyse du site** élément par élément : proposition de valeur, structure, UX, copywriting, éléments de confiance, CTA
+- **ce qui explique son succès** / **ce qui le limite** (format causal : élément → effet)
+- **5 éléments à copier** directement — structure, wording, sections, stratégie, idées
+- **un plan d'action en 3 étapes** pour appliquer tout ça à ton propre site
 
 Interface prête à vendre : landing marketing, section « comment ça marche », exemple de rapport et pricing intégrés.
 

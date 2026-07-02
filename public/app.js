@@ -11,10 +11,10 @@ const reportEl = document.getElementById("report");
 
 const LOADING_STEPS = [
   "Lecture de la page…",
-  "Analyse de la proposition de valeur…",
-  "Passage au crible du copywriting…",
-  "Évaluation du parcours de conversion…",
-  "Rédaction de l'audit…",
+  "Décodage du positionnement…",
+  "Analyse de la stratégie d'acquisition…",
+  "Identification de ce qui fait vendre…",
+  "Rédaction de ton plan d'action…",
 ];
 
 let stepTimer = null;
@@ -82,20 +82,25 @@ function renderReport({ url, report }) {
 
   document.getElementById("r-domain").textContent = new URL(url).hostname;
   document.getElementById("r-resume").textContent = r.resume;
-  document.getElementById("r-vp").textContent = r.proposition_valeur;
+  document.getElementById("r-pourquoi").textContent = r.strategie.pourquoi_ca_marche;
+  document.getElementById("r-acquisition").textContent = r.strategie.acquisition;
+  document.getElementById("r-positionnement").textContent = r.strategie.positionnement;
 
-  for (const key of ["ux", "copywriting", "conversion"]) {
-    const val = r.scores[key];
-    document.querySelector(`[data-score="${key}"]`).textContent = val;
-    const bar = document.querySelector(`[data-bar="${key}"]`);
-    bar.style.width = "0";
-    requestAnimationFrame(() => (bar.style.width = val * 10 + "%"));
-    bar.style.background = val <= 4 ? "var(--bad)" : val <= 6 ? "#d9a13b" : "var(--accent)";
+  document.getElementById("r-canaux").replaceChildren(
+    ...r.strategie.canaux.map((label) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = label;
+      return chip;
+    })
+  );
+
+  for (const el of document.querySelectorAll("#r-site [data-site]")) {
+    el.textContent = r.analyse_site[el.dataset.site] || "—";
   }
 
   fillList("r-forts", r.points_forts);
   fillList("r-faibles", r.points_faibles);
-  fillDetailList("r-ameliorations", r.ameliorations);
   fillDetailList("r-copier", r.a_copier);
 
   const plan = document.getElementById("r-plan");
@@ -138,6 +143,12 @@ function fillDetailList(id, items) {
       const box = document.createElement("div");
       const title = document.createElement("b");
       title.textContent = item.titre;
+      if (item.type) {
+        const tag = document.createElement("span");
+        tag.className = "item-type";
+        tag.textContent = item.type;
+        title.append(tag);
+      }
       const detail = document.createElement("p");
       detail.textContent = item.detail;
       box.append(title, detail);
