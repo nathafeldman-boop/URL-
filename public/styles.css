@@ -9,8 +9,8 @@
   --muted: #6f6f78;
   --faint: #9b9ba3;
   --border: #e7e7ea;
-  --accent: #5b5bd6;
-  --accent-soft: #eeeefc;
+  --accent: #2e7cf6;
+  --accent-soft: #eaf2fe;
   --good: #1a9e6c;
   --bad: #d2494f;
   --radius: 10px;
@@ -105,10 +105,10 @@ body {
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(91, 91, 214, 0.35);
+  box-shadow: 0 1px 2px rgba(46, 124, 246, 0.35);
 }
 
-.btn-primary:hover { background: #4f4fc4; }
+.btn-primary:hover { background: #2368da; }
 .btn-primary:disabled { opacity: 0.6; cursor: default; }
 
 .btn-ghost {
@@ -124,7 +124,7 @@ body {
 /* ----------------------------------------------------------------- hero */
 
 .hero {
-  max-width: 720px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 96px 24px 40px;
   text-align: center;
@@ -142,6 +142,8 @@ body {
 }
 
 .hero-title {
+  max-width: 760px;
+  margin: 0 auto;
   font-size: clamp(32px, 5.2vw, 48px);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -176,8 +178,8 @@ body {
 }
 
 .url-form:focus-within {
-  border-color: rgba(91, 91, 214, 0.45);
-  box-shadow: var(--shadow), 0 0 0 4px rgba(91, 91, 214, 0.08);
+  border-color: rgba(46, 124, 246, 0.45);
+  box-shadow: var(--shadow), 0 0 0 4px rgba(46, 124, 246, 0.08);
 }
 
 .url-icon { color: var(--faint); flex-shrink: 0; width: 18px; height: 18px; }
@@ -205,6 +207,90 @@ body {
   margin-top: 14px;
   font-size: 13.5px;
   color: var(--bad);
+}
+
+/* ---------------------------------------------------------- hero visual */
+
+.hero-visual {
+  position: relative;
+  max-width: 920px;
+  margin: 56px auto 0;
+  border-radius: 16px;
+  overflow: visible;
+}
+
+.hero-visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(23, 23, 28, 0.08);
+  box-shadow:
+    0 1px 2px rgba(20, 20, 30, 0.06),
+    0 24px 64px -16px rgba(46, 124, 246, 0.25);
+}
+
+/* Fond dégradé qui fond l'image dans la page */
+.hero-visual::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 34%;
+  border-radius: 0 0 16px 16px;
+  background: linear-gradient(to bottom, rgba(250, 250, 250, 0), rgba(250, 250, 250, 0.55));
+  pointer-events: none;
+}
+
+.hv-card {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  text-align: left;
+  max-width: 250px;
+  animation: rise 150ms ease both;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 2px 6px rgba(20, 20, 30, 0.08), 0 16px 40px -8px rgba(20, 20, 30, 0.18);
+}
+
+.hv-card .card-label { margin-bottom: 8px; }
+
+.hv-card .chips { margin-top: 0; }
+
+.hv-card p {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.hv-left { top: 10%; left: -28px; }
+.hv-right { bottom: 12%; right: -28px; animation-delay: 60ms; }
+
+/* ------------------------------------------------------------- CTA band */
+
+.cta-band {
+  padding: 40px 24px 88px;
+}
+
+.cta-band-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 64px 32px;
+  text-align: center;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(90% 120% at 50% -20%, var(--accent-soft) 0%, rgba(234, 242, 254, 0) 60%),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.cta-band-btn {
+  margin-top: 8px;
+  padding: 11px 26px;
+  font-size: 14.5px;
 }
 
 /* ----------------------------------------------------------- onboarding */
@@ -352,7 +438,7 @@ body {
   width: 0%;
   border-radius: 2px;
   background: var(--accent);
-  box-shadow: 0 0 12px rgba(91, 91, 214, 0.55);
+  box-shadow: 0 0 12px rgba(46, 124, 246, 0.55);
   transition: width 600ms ease;
 }
 
@@ -754,8 +840,8 @@ body {
 }
 
 .price-card.featured {
-  border-color: rgba(91, 91, 214, 0.4);
-  box-shadow: var(--shadow), 0 0 0 3px rgba(91, 91, 214, 0.07);
+  border-color: rgba(46, 124, 246, 0.4);
+  box-shadow: var(--shadow), 0 0 0 3px rgba(46, 124, 246, 0.07);
 }
 
 .price-badge {
@@ -842,6 +928,10 @@ body {
 @media (max-width: 780px) {
   .nav-links { display: none; }
   .hero { padding-top: 64px; }
+  .hv-left { left: 12px; top: -14px; }
+  .hv-right { right: 12px; bottom: -14px; }
+  .hv-card { max-width: 210px; padding: 11px 14px; }
+  .cta-band-inner { padding: 44px 20px; }
   .url-form { flex-wrap: wrap; padding: 10px; }
   .url-form input { flex-basis: 100%; padding: 6px 8px; }
   .url-form .btn { flex: 1; }
