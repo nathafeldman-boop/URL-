@@ -54,30 +54,69 @@
 
     <!-- ============================================================ App -->
     <section class="hero app-hero" id="audit">
-      <h1 class="hero-title app-title">Quel site veux-tu comprendre&nbsp;?</h1>
-      <p class="hero-sub">Colle l'URL d'un concurrent, d'un leader de ton marché, ou de ta propre page.</p>
+      <div class="app-stage" id="app-visual">
 
-      <form class="url-form glass" id="analyze-form" autocomplete="off">
-        <svg class="url-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M8.5 11.5a4 4 0 005.66 0l2.34-2.34a4 4 0 00-5.66-5.66l-1.17 1.17M11.5 8.5a4 4 0 00-5.66 0L3.5 10.84a4 4 0 005.66 5.66l1.17-1.17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        <input
-          id="url-input"
-          type="text"
-          inputmode="url"
-          placeholder="concurrent.com"
-          aria-label="URL du site à décoder"
-          spellcheck="false"
-          required
-        />
-        <button class="btn btn-primary" id="analyze-btn" type="submit">Lancer l'analyse</button>
-      </form>
-      <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
-      <p class="form-error" id="form-error" role="alert" hidden></p>
+        <aside class="stage-panel stage-left" aria-hidden="true">
+          <p class="stage-title">Analyse de stratégie</p>
+          <div class="stage-gauge">
+            <svg viewBox="0 0 84 84" width="72" height="72">
+              <circle cx="42" cy="42" r="34" fill="none" stroke="var(--border)" stroke-width="7"/>
+              <circle cx="42" cy="42" r="34" fill="none" stroke="var(--accent)" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="21"
+                transform="rotate(-90 42 42)"/>
+            </svg>
+            <div><b>90</b><span>/100</span><i>Excellent</i></div>
+          </div>
+          <div class="stage-rows">
+            <div><span>Alignement stratégique</span><b>Fort</b></div>
+            <div><span>Cible</span><b>Précise</b></div>
+            <div><span>Potentiel de croissance</span><b>Fort</b></div>
+          </div>
+          <svg class="stage-spark" viewBox="0 0 180 44" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 36 L22 30 L44 33 L66 22 L88 26 L110 14 L132 18 L154 8 L180 4"
+              fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </aside>
 
-      <figure class="app-visual" id="app-visual">
-        <img src="/assets/ascension.webp" alt="" width="992" height="496" loading="lazy" />
-      </figure>
+        <div class="stage-center card">
+          <h1 class="hero-title app-title">Quel site veux-tu comprendre&nbsp;?</h1>
+          <p class="hero-sub">Colle l'URL d'un concurrent, d'un leader de ton marché, ou de ta propre page.</p>
+          <form class="url-form glass" id="analyze-form" autocomplete="off">
+            <svg class="url-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M8.5 11.5a4 4 0 005.66 0l2.34-2.34a4 4 0 00-5.66-5.66l-1.17 1.17M11.5 8.5a4 4 0 00-5.66 0L3.5 10.84a4 4 0 005.66 5.66l1.17-1.17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <input
+              id="url-input"
+              type="text"
+              inputmode="url"
+              placeholder="concurrent.com"
+              aria-label="URL du site à décoder"
+              spellcheck="false"
+              required
+            />
+            <button class="btn btn-primary" id="analyze-btn" type="submit">Lancer l'analyse</button>
+          </form>
+          <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+        </div>
+
+        <aside class="stage-panel stage-right" aria-hidden="true">
+          <p class="stage-title">Funnel de conversion</p>
+          <div class="stage-funnel">
+            <span style="width:100%"></span>
+            <span style="width:78%"></span>
+            <span style="width:52%"></span>
+            <span style="width:30%"></span>
+          </div>
+          <p class="stage-title">Recommandations</p>
+          <div class="stage-recos">
+            <div><span>1. Simplifie ton checkout</span><b>+12 %</b></div>
+            <div><span>2. Clarifie ton titre</span><b>+9 %</b></div>
+            <div><span>3. Montre ta preuve sociale</span><b>+5 %</b></div>
+          </div>
+        </aside>
+
+      </div>
     </section>
 
     <!-- =================================================== Analysis mode -->
@@ -107,6 +146,41 @@
         <div class="report-vp">
           <h3 class="card-label">Pourquoi ça vend</h3>
           <p id="r-pourquoi"></p>
+        </div>
+      </div>
+
+      <div class="card dash">
+        <div class="dash-gauges">
+          <div class="gauge gauge-main" data-gauge="global" data-max="100">
+            <span class="card-label">Score global</span>
+          </div>
+          <div class="gauge" data-gauge="ux"><span class="card-label">UX</span></div>
+          <div class="gauge" data-gauge="copywriting"><span class="card-label">Copywriting</span></div>
+          <div class="gauge" data-gauge="conversion"><span class="card-label">Conversion</span></div>
+        </div>
+        <div class="dash-tiles">
+          <div class="tile"><span class="card-label">Temps de lecture</span><b id="m-lecture">—</b></div>
+          <div class="tile"><span class="card-label">Lisibilité</span><b id="m-lisibilite">—</b><i id="m-lisibilite-niveau"></i></div>
+          <div class="tile"><span class="card-label">Mots</span><b id="m-mots">—</b></div>
+          <div class="tile"><span class="card-label">CTA détectés</span><b id="m-cta">—</b></div>
+        </div>
+        <div class="dash-profile">
+          <div><span>Alignement stratégique</span><b id="p-alignement">—</b></div>
+          <div><span>Cible</span><b id="p-cible">—</b></div>
+          <div><span>Potentiel de croissance</span><b id="p-potentiel">—</b></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h3 class="card-title">Funnel de conversion</h3>
+          <p class="card-sub">La solidité de chaque étape du parcours visiteur.</p>
+          <div class="funnel" id="r-funnel"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Mots-clés dominants</h3>
+          <p class="card-sub">Les mots les plus répétés sur la page — son territoire sémantique.</p>
+          <div class="kw-list" id="r-keywords"></div>
         </div>
       </div>
 

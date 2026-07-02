@@ -231,10 +231,18 @@ function setError(msg) {
   errorEl.textContent = msg || "";
 }
 
-function renderReport({ url, technologies, report }) {
+function renderReport({ url, technologies, metrics, report }) {
   const r = report;
   lastAnalysis = { url, report };
   document.getElementById("app-visual").hidden = true;
+
+  renderGauges(r.scores);
+  renderMetrics(metrics);
+  document.getElementById("p-alignement").textContent = r.profil.alignement_strategique;
+  document.getElementById("p-cible").textContent = r.profil.cible;
+  document.getElementById("p-potentiel").textContent = r.profil.potentiel_croissance;
+  renderFunnel(r.funnel);
+  renderKeywords(metrics?.mots_cles || []);
 
   // Réinitialise l'étape comparaison pour ce nouveau concurrent
   document.getElementById("compare").hidden = true;
@@ -281,12 +289,130 @@ function renderReport({ url, technologies, report }) {
       const detail = document.createElement("p");
       detail.textContent = step.detail;
       div.append(num, title, detail);
+      if (step.impact) {
+        const impact = document.createElement("span");
+        impact.className = "impact-chip";
+        impact.textContent = step.impact;
+        impact.title = "Estimation";
+        div.append(impact);
+      }
       return div;
     })
   );
 
   reportEl.hidden = false;
   reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* --------------------------------------------------------- dashboard */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function scoreLabel(v) {
+  return v >= 80 ? "Excellent" : v >= 60 ? "Bon" : v >= 45 ? "Moyen" : "Faible";
+}
+
+function renderGauges(scores) {
+  for (const el of document.querySelectorAll(".gauge")) {
+    const val = scores[el.dataset.gauge] ?? 0;
+    el.querySelectorAll("svg, .gauge-val").forEach((n) => n.remove());
+
+    const main = el.classList.contains("gauge-main");
+    const size = main ? 132 : 96;
+    const r = main ? 56 : 40;
+    const sw = main ? 9 : 7;
+    const circ = 2 * Math.PI * r;
+
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+    svg.setAttribute("width", size);
+    svg.setAttribute("height", size);
+    for (const [stroke, offset] of [["var(--border)", 0], ["var(--accent)", circ * (1 - val / 100)]]) {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", size / 2);
+      c.setAttribute("cy", size / 2);
+      c.setAttribute("r", r);
+      c.setAttribute("fill", "none");
+      c.setAttribute("stroke", stroke);
+      c.setAttribute("stroke-width", sw);
+      if (offset) {
+        c.setAttribute("stroke-linecap", "round");
+        c.setAttribute("stroke-dasharray", circ);
+        c.setAttribute("stroke-dashoffset", offset);
+        c.setAttribute("transform", `rotate(-90 ${size / 2} ${size / 2})`);
+      }
+      svg.append(c);
+    }
+
+    const valEl = document.createElement("div");
+    valEl.className = "gauge-val";
+    const num = document.createElement("b");
+    num.textContent = val;
+    const lab = document.createElement("i");
+    lab.textContent = scoreLabel(val);
+    valEl.append(num, lab);
+
+    el.prepend(svg, valEl);
+  }
+}
+
+function renderMetrics(m) {
+  if (!m) return;
+  document.getElementById("m-lecture").textContent = m.temps_lecture || "—";
+  document.getElementById("m-lisibilite").textContent = m.lisibilite ? m.lisibilite.score + "/100" : "—";
+  document.getElementById("m-lisibilite-niveau").textContent = m.lisibilite?.niveau || "";
+  document.getElementById("m-mots").textContent = (m.mots || 0).toLocaleString("fr-FR");
+  document.getElementById("m-cta").textContent = m.cta ?? "—";
+}
+
+function renderFunnel(steps) {
+  document.getElementById("r-funnel").replaceChildren(
+    ...(steps || []).map((s) => {
+      const row = document.createElement("div");
+      row.className = "funnel-step";
+      const head = document.createElement("div");
+      head.className = "funnel-head";
+      const name = document.createElement("span");
+      name.textContent = s.etape;
+      const val = document.createElement("b");
+      val.textContent = s.force + "/100";
+      head.append(name, val);
+      const bar = document.createElement("div");
+      bar.className = "meter";
+      const fill = document.createElement("span");
+      fill.style.width = s.force + "%";
+      bar.append(fill);
+      const detail = document.createElement("p");
+      detail.textContent = s.detail;
+      row.append(head, bar, detail);
+      return row;
+    })
+  );
+}
+
+function renderKeywords(words) {
+  const max = Math.max(1, ...words.map((w) => w.n));
+  document.getElementById("r-keywords").replaceChildren(
+    ...words.map((w) => {
+      const row = document.createElement("div");
+      row.className = "kw-row";
+      const name = document.createElement("span");
+      name.className = "kw-word";
+      name.textContent = w.mot;
+      const bar = document.createElement("div");
+      bar.className = "meter";
+      const fill = document.createElement("span");
+      fill.style.width = Math.round((w.n / max) * 100) + "%";
+      bar.append(fill);
+      const count = document.createElement("b");
+      count.textContent = "×" + w.n;
+      row.append(name, bar, count);
+      return row;
+    })
+  );
+  if (!words.length) {
+    document.getElementById("r-keywords").textContent = "Pas assez de texte pour dégager des mots-clés.";
+  }
 }
 
 function fillChips(id, labels) {
