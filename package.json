@@ -1,0 +1,10 @@
+{
+  "name": "verdict",
+  "version": "0.1.0",
+  "description": "Audit de conversion pour landing pages — colle une URL, reçois un plan d'action.",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

@@ -1,0 +1,50 @@
+# Verdict
+
+Audit de conversion pour landing pages. Colle une URL, reçois en ~40 secondes :
+
+- un résumé du site en une phrase et sa proposition de valeur
+- trois scores honnêtes : **UX**, **Copywriting**, **Conversion** (0–10)
+- points forts / points faibles
+- **5 améliorations prioritaires** classées par impact
+- **3 éléments à copier** sur tes autres pages
+- un **plan d'action en 3 étapes**
+
+Interface prête à vendre : landing marketing, section « comment ça marche », exemple de rapport et pricing intégrés.
+
+## Lancer en local
+
+Prérequis : Node.js ≥ 18. Aucune dépendance à installer.
+
+```bash
+cp .env.example .env   # puis colle ta clé Mistral dans .env
+npm start              # → http://localhost:3000
+```
+
+La clé se crée sur [console.mistral.ai](https://console.mistral.ai/api-keys). Elle reste côté serveur : le navigateur ne la voit jamais. **Ne commite jamais ton `.env`** (il est déjà dans `.gitignore`).
+
+## Architecture
+
+```
+server.js          Serveur HTTP Node natif (zéro dépendance)
+                   ├─ sert les fichiers statiques de public/
+                   └─ POST /api/analyze : télécharge la page cible,
+                      extrait les signaux (title, h1/h2, CTA, texte…),
+                      appelle l'API Mistral et renvoie le rapport JSON
+public/
+  index.html       Landing + rapport + pricing
+  styles.css       Design system (blanc, accent indigo, ombres légères)
+  app.js           Soumission, états de chargement, rendu du rapport
+```
+
+### Config (variables d'environnement)
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `MISTRAL_API_KEY` | — (requis) | Clé API Mistral |
+| `MISTRAL_MODEL` | `mistral-large-latest` | Modèle utilisé pour l'audit |
+| `PORT` | `3000` | Port du serveur |
+
+## Limites connues (MVP)
+
+- Les sites rendus 100 % en JavaScript côté client renvoient peu de contenu : l'audit est refusé plutôt que d'inventer.
+- Pas encore de comptes, d'historique ni de limite d'usage — la section pricing est un placeholder prêt à brancher.
