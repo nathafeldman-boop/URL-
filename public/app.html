@@ -142,13 +142,22 @@
 
       <div class="report-head card">
         <div class="report-head-top">
-          <span class="report-domain" id="r-domain"></span>
+          <div class="head-ids">
+            <span class="report-domain" id="r-domain"></span>
+            <span class="chip" id="r-type"></span>
+          </div>
           <button class="btn btn-ghost btn-sm" id="new-audit">Décoder un autre site</button>
         </div>
         <h2 class="report-resume" id="r-resume"></h2>
-        <div class="report-vp">
-          <h3 class="card-label">Pourquoi ça vend</h3>
-          <p id="r-pourquoi"></p>
+        <div class="report-vp fact-grid">
+          <div class="fact">
+            <span class="card-label">Pourquoi ça vend</span>
+            <p id="r-pourquoi"></p>
+          </div>
+          <div class="fact">
+            <span class="card-label">Modèle économique</span>
+            <p id="r-modele"></p>
+          </div>
         </div>
       </div>
 

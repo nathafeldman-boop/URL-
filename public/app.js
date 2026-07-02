@@ -253,6 +253,8 @@ function renderReport({ url, technologies, metrics, report }) {
   document.getElementById("cc-domain").textContent = new URL(url).hostname;
 
   document.getElementById("r-domain").textContent = new URL(url).hostname;
+  document.getElementById("r-type").textContent = r.type_site || "—";
+  document.getElementById("r-modele").textContent = r.modele_economique || "—";
   document.getElementById("r-resume").textContent = r.resume;
   document.getElementById("r-pourquoi").textContent = r.strategie.pourquoi_ca_marche;
   document.getElementById("r-strategie").textContent = r.strategie.globale;
