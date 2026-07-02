@@ -22,14 +22,24 @@ npm start              # → http://localhost:3000
 
 La clé se crée sur [console.mistral.ai](https://console.mistral.ai/api-keys). Elle reste côté serveur : le navigateur ne la voit jamais. **Ne commite jamais ton `.env`** (il est déjà dans `.gitignore`).
 
+## Déployer sur Vercel
+
+Le projet est prêt pour Vercel (statique + fonction serverless) :
+
+1. Va sur [vercel.com/new](https://vercel.com/new) et importe le repo GitHub `nathafeldman-boop/URL-`.
+2. Laisse les réglages par défaut (framework « Other », aucun build). `vercel.json` configure déjà tout.
+3. Dans **Environment Variables**, ajoute `MISTRAL_API_KEY` avec ta clé.
+4. Clique **Deploy**. Chaque `git push` redéploiera automatiquement.
+
 ## Architecture
 
 ```
-server.js          Serveur HTTP Node natif (zéro dépendance)
-                   ├─ sert les fichiers statiques de public/
-                   └─ POST /api/analyze : télécharge la page cible,
-                      extrait les signaux (title, h1/h2, CTA, texte…),
-                      appelle l'API Mistral et renvoie le rapport JSON
+lib/audit.js       Logique d'audit partagée : fetch de la page cible,
+                   extraction des signaux (title, h1/h2, CTA, texte…),
+                   appel de l'API Mistral, validation du rapport JSON
+api/analyze.js     Fonction serverless Vercel (POST /api/analyze)
+server.js          Serveur de dev local zéro dépendance : statique + API
+vercel.json        Config Vercel (public/ en statique, maxDuration 60 s)
 public/
   index.html       Landing + rapport + pricing
   styles.css       Design system (blanc, accent indigo, ombres légères)
