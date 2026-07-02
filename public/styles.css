@@ -209,6 +209,20 @@ body {
   color: var(--bad);
 }
 
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-lg { padding: 11px 24px; font-size: 14.5px; }
+
+/* Page app : écran focalisé sur l'input */
+.app-hero { padding-top: 120px; padding-bottom: 64px; }
+
+.app-title { font-size: clamp(28px, 4vw, 38px); }
+
 /* ---------------------------------------------------------- hero visual */
 
 .hero-visual {

@@ -70,6 +70,8 @@ function serveStatic(req, res) {
   const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
   let filePath = path.normalize(path.join(PUBLIC_DIR, urlPath === "/" ? "index.html" : urlPath));
   if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 403, { error: "Interdit." });
+  // Équivalent local du cleanUrls de Vercel : /app → app.html
+  if (!fs.existsSync(filePath) && fs.existsSync(filePath + ".html")) filePath += ".html";
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     filePath = path.join(PUBLIC_DIR, "index.html");
   }
