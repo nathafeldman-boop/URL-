@@ -89,6 +89,7 @@ form.addEventListener("submit", async (e) => {
 document.getElementById("new-audit").addEventListener("click", () => {
   reportEl.hidden = true;
   document.getElementById("compare").hidden = true;
+  document.getElementById("app-visual").hidden = false;
   input.value = "";
   input.focus();
   document.getElementById("audit").scrollIntoView({ behavior: "smooth" });
@@ -233,6 +234,7 @@ function setError(msg) {
 function renderReport({ url, technologies, report }) {
   const r = report;
   lastAnalysis = { url, report };
+  document.getElementById("app-visual").hidden = true;
 
   // Réinitialise l'étape comparaison pour ce nouveau concurrent
   document.getElementById("compare").hidden = true;
