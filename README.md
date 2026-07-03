@@ -55,7 +55,7 @@ public/
   index.html       Landing + rapport + pricing
   app.html          Application (analyse, historique, paywall, compte)
   styles.css       Design system (blanc, accent indigo, ombres légères)
-  auth.js          Authentification Supabase (lien magique, session, historique)
+  auth.js          Authentification Supabase (code par email, session, historique)
   app.js           Soumission, états de chargement, rendu du rapport
 ```
 
@@ -77,11 +77,18 @@ public/
 
 ## Comptes (Supabase)
 
-Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses) vit dans un cookie signé et l'historique dans le navigateur (localStorage). Se connecter (lien magique par email, sans mot de passe) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
+Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses) vit dans un cookie signé et l'historique dans le navigateur (localStorage). Se connecter (email → code à 6 chiffres, sans mot de passe ni lien à cliquer) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
 
-`public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) ; `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
+`public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) : `requestOtp(email)` envoie le code, `verifyOtp(email, code)` ouvre la session. `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
 
-⚠️ **Avant une vraie mise en production avec des comptes** : le service d'email intégré de Supabase est très limité en volume (pensé pour les tests, pas pour l'envoi en masse) — configure un SMTP personnalisé dans Authentication → Emails avant d'espérer des liens magiques fiables à grande échelle. Vérifie aussi que l'URL de production est bien dans Authentication → URL Configuration → Redirect URLs, sans quoi le lien magique ne redirigera pas correctement.
+⚠️ **Deux réglages Supabase uniquement accessibles depuis le dashboard** (aucune API ne les expose, donc à faire manuellement une seule fois) :
+1. **Authentication → Emails → Enable custom SMTP** : le service d'email intégré de Supabase est très limité en volume — configure un vrai fournisseur SMTP (Resend, Brevo…) avant d'espérer des envois fiables à volume réel.
+2. **Authentication → Email Templates → Magic Link** : par défaut ce template affiche un lien à cliquer. Pour recevoir un code à taper (ce que le front attend), remplace son contenu par un template qui inclut `{{ .Token }}`, par exemple :
+   ```html
+   <h2>Ton code de connexion Verdict</h2>
+   <p>Entre ce code dans l'application : <strong>{{ .Token }}</strong></p>
+   <p>Il expire dans quelques minutes.</p>
+   ```
 
 ## Limites connues (MVP)
 

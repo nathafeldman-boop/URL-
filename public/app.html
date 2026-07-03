@@ -44,14 +44,24 @@
     </div>
 
     <div class="drawer-account">
-      <!-- Déconnecté -->
+      <!-- Déconnecté — étape 1 : email -->
       <form class="account-signin" id="signin-form" autocomplete="off">
         <p class="account-hint">Connecte-toi pour synchroniser ton historique et retrouver ton abonnement sur tous tes appareils.</p>
         <div class="account-row">
           <input id="signin-email" type="email" placeholder="ton@email.com" aria-label="Ton email" required />
-          <button class="btn btn-primary btn-sm" id="signin-btn" type="submit">Recevoir un lien</button>
+          <button class="btn btn-primary btn-sm" id="signin-btn" type="submit">Recevoir un code</button>
         </div>
         <p class="account-msg" id="signin-msg" hidden></p>
+      </form>
+      <!-- Déconnecté — étape 2 : code reçu par email -->
+      <form class="account-signin" id="code-form" autocomplete="off" hidden>
+        <p class="account-hint">Code envoyé à <b id="code-email-display"></b> — vérifie aussi tes spams.</p>
+        <div class="account-row">
+          <input id="signin-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" aria-label="Code reçu par email" required />
+          <button class="btn btn-primary btn-sm" id="code-btn" type="submit">Valider</button>
+        </div>
+        <p class="account-msg" id="code-msg" hidden></p>
+        <button class="account-link-btn" id="code-back" type="button">Changer d'email</button>
       </form>
       <!-- Connecté -->
       <div class="account-signed-in" id="account-signed-in" hidden>

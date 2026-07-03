@@ -148,6 +148,10 @@ function renderAccessState() {
 function renderAccountUI() {
   const signedIn = isLoggedIn() && accessState.email;
   document.getElementById("signin-form").hidden = signedIn;
+  // Le formulaire de code n'est réaffiché qu'explicitement après l'envoi
+  // d'un code (cf. plus bas) — jamais par cette fonction, pour ne pas
+  // effacer une saisie en cours quand le statut d'accès se rafraîchit.
+  document.getElementById("code-form").hidden = true;
   document.getElementById("account-signed-in").hidden = !signedIn;
   if (signedIn) {
     document.getElementById("account-email").textContent = accessState.email;
@@ -158,8 +162,6 @@ function renderAccountUI() {
 }
 
 (async function initAccess() {
-  await consumeMagicLinkFromUrl();
-
   const params = new URLSearchParams(location.search);
   const sessionId = params.get("session_id");
   if (sessionId) {
@@ -433,10 +435,16 @@ historyClear.addEventListener("click", async () => {
   renderHistory();
 });
 
-/* ------------------------------------------------------------------ compte */
+/* ------------------------------------------------------------------ compte
+   Connexion en deux étapes : email → code à 6 chiffres reçu par email
+   (pas de lien à cliquer — plus fiable, et rien à faire pendant un
+   paiement Stripe dans le même onglet). */
 
 const signinForm = document.getElementById("signin-form");
 const signinMsg = document.getElementById("signin-msg");
+const codeForm = document.getElementById("code-form");
+const codeMsg = document.getElementById("code-msg");
+let pendingEmail = null;
 
 signinForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -446,18 +454,54 @@ signinForm.addEventListener("submit", async (e) => {
   btnSignin.disabled = true;
   signinMsg.hidden = false;
   signinMsg.className = "account-msg";
-  signinMsg.textContent = "Envoi du lien…";
+  signinMsg.textContent = "Envoi du code…";
   try {
-    await requestMagicLink(email);
-    signinMsg.className = "account-msg is-ok";
-    signinMsg.textContent = "Lien envoyé ! Vérifie ta boîte mail (et les spams).";
-    track("magic_link_envoye");
+    await requestOtp(email);
+    pendingEmail = email;
+    document.getElementById("code-email-display").textContent = email;
+    document.getElementById("signin-code").value = "";
+    codeMsg.hidden = true;
+    signinForm.hidden = true;
+    codeForm.hidden = false;
+    document.getElementById("signin-code").focus();
+    track("code_envoye");
   } catch (err) {
     signinMsg.className = "account-msg is-error";
     signinMsg.textContent = err.message;
   } finally {
     btnSignin.disabled = false;
   }
+});
+
+codeForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = document.getElementById("signin-code").value.trim();
+  if (!code || !pendingEmail) return;
+  const btnCode = document.getElementById("code-btn");
+  btnCode.disabled = true;
+  codeMsg.hidden = true;
+  try {
+    await verifyOtp(pendingEmail, code);
+    track("connexion_reussie");
+    signinMsg.hidden = true;
+    signinForm.reset();
+    await refreshAccessState();
+    renderHistory();
+  } catch (err) {
+    codeMsg.hidden = false;
+    codeMsg.className = "account-msg is-error";
+    codeMsg.textContent = err.message;
+  } finally {
+    btnCode.disabled = false;
+  }
+});
+
+document.getElementById("code-back").addEventListener("click", () => {
+  pendingEmail = null;
+  codeForm.hidden = true;
+  codeForm.reset();
+  codeMsg.hidden = true;
+  signinForm.hidden = false;
 });
 
 document.getElementById("signout-btn").addEventListener("click", async () => {

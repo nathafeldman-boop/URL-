@@ -1,8 +1,10 @@
 /**
- * Verdict — authentification Supabase par lien magique (zéro dépendance,
- * appels REST directs). Gère la session (stockage, rafraîchissement), le
- * lien magique, et l'historique/quota synchronisés côté serveur pour les
- * comptes connectés. Chargé avant app.js, qui consomme ces fonctions.
+ * Verdict — authentification Supabase par code à 6 chiffres envoyé par
+ * email (zéro dépendance, appels REST directs — pas de lien à cliquer :
+ * plus fiable, et compatible avec le paiement fait dans le même onglet).
+ * Gère la session (stockage, rafraîchissement) et l'historique/quota
+ * synchronisés côté serveur pour les comptes connectés. Chargé avant
+ * app.js, qui consomme ces fonctions.
  *
  * La clé "anon" ci-dessous est publique par conception (protégée par les
  * politiques RLS côté base) — ce n'est pas un secret.
@@ -72,10 +74,9 @@ async function sbAuthHeaders() {
   return s ? { Authorization: "Bearer " + s.access_token } : {};
 }
 
-/** Envoie un lien de connexion par email. */
-async function requestMagicLink(email) {
-  const redirect = encodeURIComponent(location.origin + "/app");
-  const resp = await fetch(`${SUPABASE_URL}/auth/v1/otp?redirect_to=${redirect}`, {
+/** Envoie un code de connexion à 6 chiffres par email. */
+async function requestOtp(email) {
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
     body: JSON.stringify({ email, create_user: true }),
@@ -83,27 +84,26 @@ async function requestMagicLink(email) {
   if (!resp.ok) {
     const data = await resp.json().catch(() => ({}));
     if (resp.status === 429) throw new Error("Trop de tentatives. Réessaie dans quelques minutes.");
-    throw new Error(data.msg || data.error_description || "Impossible d'envoyer le lien. Réessaie.");
+    throw new Error(data.msg || data.error_description || "Impossible d'envoyer le code. Réessaie.");
   }
 }
 
-/** Repère un lien magique dans l'URL au retour d'email, ouvre la session. */
-async function consumeMagicLinkFromUrl() {
-  if (!location.hash.includes("access_token")) return false;
-  const params = new URLSearchParams(location.hash.slice(1));
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
-  const expires_in = Number(params.get("expires_in") || 3600);
-  if (!access_token) return false;
-
-  history.replaceState(null, "", location.pathname + location.search);
-
-  const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + access_token },
+/** Valide le code à 6 chiffres reçu par email et ouvre la session. */
+async function verifyOtp(email, code) {
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+    body: JSON.stringify({ email, token: code.trim(), type: "email" }),
   });
-  const user = resp.ok ? await resp.json() : null;
-  setSbSession({ access_token, refresh_token, expires_at: Date.now() + expires_in * 1000, user });
-  return true;
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.msg || data.error_description || "Code invalide ou expiré.");
+  setSbSession({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: Date.now() + data.expires_in * 1000,
+    user: data.user,
+  });
+  return data;
 }
 
 async function signOut() {
