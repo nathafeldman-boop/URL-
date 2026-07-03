@@ -54,7 +54,8 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, status, body);
     }
     if (req.method === "GET" && req.url.split("?")[0] === "/api/checkout") {
-      const { status, redirectUrl, body } = await createCheckout(`http://localhost:${PORT}`);
+      const plan = new URL(req.url, "http://x").searchParams.get("plan") || "mensuel";
+      const { status, redirectUrl, body } = await createCheckout(`http://localhost:${PORT}`, plan);
       if (redirectUrl) {
         res.writeHead(status, { Location: redirectUrl });
         return res.end();

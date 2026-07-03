@@ -107,21 +107,33 @@
 
     <!-- =========================================================== Tarifs -->
     <section class="section" id="tarifs">
-      <h2 class="section-title">Un seul plan, sans surprise</h2>
+      <h2 class="section-title">Un plan simple, sans surprise</h2>
       <p class="section-sub">Moins cher qu'une heure de consultant. Résiliable en un clic.</p>
-      <div class="pricing pricing-solo">
-        <div class="price-card card featured">
-          <span class="price-badge">Pro</span>
-          <h3>Verdict Pro</h3>
+      <div class="pricing pricing-duo">
+        <div class="price-card card">
+          <h3>Verdict Pro — Mensuel</h3>
           <p class="price"><b>15 €</b><span>/mois</span></p>
-          <p class="price-desc">Pour les fondateurs qui veulent comprendre leur marché.</p>
+          <p class="price-desc">Pour tester Verdict sans engagement.</p>
           <ul>
             <li>Analyses illimitées</li>
             <li>Stratégie, trafic et technique de n'importe quel site</li>
             <li>Comparaison avec ton propre site</li>
             <li>Plan d'action personnalisé</li>
           </ul>
-          <a href="/api/checkout" class="btn btn-primary">Passer en Pro — 15 €/mois</a>
+          <a href="/api/checkout?plan=mensuel" class="btn btn-ghost">Passer en Pro — 15 €/mois</a>
+          <p class="price-note">Paiement sécurisé par Stripe.</p>
+        </div>
+        <div class="price-card card featured">
+          <span class="price-badge">Économise 80 €</span>
+          <h3>Verdict Pro — Annuel</h3>
+          <p class="price"><b>100 €</b><span>/an</span><span class="price-was">180 €</span></p>
+          <p class="price-desc">Soit 8,33 €/mois — plus de 5 mois offerts.</p>
+          <ul>
+            <li>Tout le plan mensuel</li>
+            <li>Un an de veille concurrentielle pour le prix de 6 analyses de consultant</li>
+            <li>Tarif bloqué pendant 12 mois</li>
+          </ul>
+          <a href="/api/checkout?plan=annuel" class="btn btn-primary">Passer en Pro — 100 €/an</a>
           <p class="price-note">Paiement sécurisé par Stripe.</p>
         </div>
       </div>

@@ -78,6 +78,7 @@ form.addEventListener("submit", async (e) => {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "L'analyse a échoué. Réessaie.");
+    addToHistory(data);
     renderReport(data);
   } catch (err) {
     setError(err.message === "Failed to fetch" ? "Connexion au serveur impossible." : err.message);
@@ -86,7 +87,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-document.getElementById("new-audit").addEventListener("click", () => {
+function resetToInput() {
   reportEl.hidden = true;
   document.getElementById("compare").hidden = true;
   document.getElementById("app-visual").hidden = false;
@@ -94,6 +95,128 @@ document.getElementById("new-audit").addEventListener("click", () => {
   input.value = "";
   input.focus();
   document.getElementById("audit").scrollIntoView({ behavior: "smooth" });
+}
+
+document.getElementById("new-audit").addEventListener("click", resetToInput);
+for (const btnRelaunch of document.querySelectorAll(".relaunch-btn")) {
+  btnRelaunch.addEventListener("click", resetToInput);
+}
+
+/* ------------------------------------------------------------ historique
+   Les analyses sont conservées en localStorage (20 max) et rejouables
+   depuis le panneau ouvert par le bouton ☰ en haut à droite. */
+
+const HISTORY_KEY = "verdict_history";
+const HISTORY_MAX = 20;
+
+const drawer = document.getElementById("history-drawer");
+const drawerOverlay = document.getElementById("history-overlay");
+const historyToggle = document.getElementById("history-toggle");
+const historyList = document.getElementById("history-list");
+const historyEmpty = document.getElementById("history-empty");
+const historyClear = document.getElementById("history-clear");
+
+function loadHistory() {
+  try {
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY));
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(list) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  } catch {
+    /* stockage plein ou indisponible : l'app fonctionne sans historique */
+  }
+}
+
+function addToHistory(data) {
+  const list = loadHistory().filter((e) => e.url !== data.url);
+  list.unshift({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    url: data.url,
+    technologies: data.technologies,
+    metrics: data.metrics,
+    report: data.report,
+  });
+  saveHistory(list.slice(0, HISTORY_MAX));
+  renderHistory();
+}
+
+function removeFromHistory(id) {
+  saveHistory(loadHistory().filter((e) => e.id !== id));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = loadHistory();
+  historyEmpty.hidden = list.length > 0;
+  historyClear.hidden = list.length === 0;
+
+  historyList.replaceChildren(
+    ...list.map((entry) => {
+      const li = document.createElement("li");
+      li.className = "history-item";
+
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "history-open";
+
+      const domain = document.createElement("b");
+      domain.textContent = new URL(entry.url).hostname;
+      const meta = document.createElement("span");
+      const score = entry.report?.scores?.global;
+      meta.textContent =
+        new Date(entry.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) +
+        (typeof score === "number" ? ` · ${score}/100` : "");
+      open.append(domain, meta);
+      open.addEventListener("click", () => {
+        closeDrawer();
+        renderReport(entry);
+        window.scrollTo({ top: 0 });
+      });
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "history-del";
+      del.setAttribute("aria-label", "Supprimer cette analyse");
+      del.textContent = "×";
+      del.addEventListener("click", () => removeFromHistory(entry.id));
+
+      li.append(open, del);
+      return li;
+    })
+  );
+}
+
+function openDrawer() {
+  renderHistory();
+  drawer.classList.add("open");
+  drawerOverlay.hidden = false;
+  historyToggle.setAttribute("aria-expanded", "true");
+}
+
+function closeDrawer() {
+  drawer.classList.remove("open");
+  drawerOverlay.hidden = true;
+  historyToggle.setAttribute("aria-expanded", "false");
+}
+
+historyToggle.addEventListener("click", () => {
+  drawer.classList.contains("open") ? closeDrawer() : openDrawer();
+});
+document.getElementById("history-close").addEventListener("click", closeDrawer);
+drawerOverlay.addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDrawer();
+});
+historyClear.addEventListener("click", () => {
+  saveHistory([]);
+  renderHistory();
 });
 
 /* ----------------------------------------------------------- comparaison */

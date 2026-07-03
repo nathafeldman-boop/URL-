@@ -55,12 +55,14 @@ public/
 |---|---|---|
 | `MISTRAL_API_KEY` | — (requis) | Clé API Mistral |
 | `MISTRAL_MODEL` | `mistral-large-latest` | Modèle utilisé pour l'audit |
-| `STRIPE_SECRET_KEY` | — | Clé secrète Stripe (active le bouton « Passer en Pro », 15 €/mois) |
-| `STRIPE_PRODUCT_ID` | `prod_UoUCJGRo2tMb6B` | Produit Stripe dont le prix par défaut est facturé |
-| `STRIPE_PRICE_ID` | — | Optionnel : ID prix (`price_…`) qui court-circuite la résolution produit |
+| `STRIPE_SECRET_KEY` | — | Clé secrète Stripe (active les boutons « Passer en Pro ») |
+| `STRIPE_PRODUCT_ID` | `prod_UoUCJGRo2tMb6B` | Produit Stripe du plan mensuel (15 €/mois) |
+| `STRIPE_PRODUCT_ID_ANNUAL` | `prod_UoV06C0wwwwcmG` | Produit Stripe du plan annuel (100 €/an) |
+| `STRIPE_PRICE_ID` | — | Optionnel : ID prix (`price_…`) du plan mensuel, court-circuite la résolution produit |
+| `STRIPE_PRICE_ID_ANNUAL` | — | Optionnel : ID prix (`price_…`) du plan annuel |
 | `PORT` | `3000` | Port du serveur |
 
 ## Limites connues (MVP)
 
 - Les sites rendus 100 % en JavaScript côté client renvoient peu de contenu : l'audit est refusé plutôt que d'inventer.
-- Pas encore de comptes, d'historique ni de limite d'usage — la section pricing est un placeholder prêt à brancher.
+- Pas encore de comptes ni de limite d'usage. L'historique des analyses est conservé en localStorage (20 dernières, par navigateur).
