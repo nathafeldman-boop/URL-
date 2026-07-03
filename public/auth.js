@@ -1,7 +1,12 @@
 /**
- * Verdict — authentification Supabase par code à 6 chiffres envoyé par
- * email (zéro dépendance, appels REST directs — pas de lien à cliquer :
- * plus fiable, et compatible avec le paiement fait dans le même onglet).
+ * Verdict — authentification Supabase, deux méthodes :
+ * - email → code à 6 chiffres (zéro dépendance, appels REST directs —
+ *   pas de lien à cliquer : plus fiable, compatible avec un paiement en
+ *   cours dans le même onglet)
+ * - Google (OAuth) : redirection vers Supabase qui gère l'échange avec
+ *   Google, puis retour sur /app avec les jetons dans le fragment d'URL
+ *   (seule méthode possible pour l'OAuth — ce n'est pas un email, donc pas
+ *   le problème de lien pré-chargé qui affectait le lien magique)
  * Gère la session (stockage, rafraîchissement) et l'historique/quota
  * synchronisés côté serveur pour les comptes connectés. Chargé avant
  * app.js, qui consomme ces fonctions.
@@ -104,6 +109,35 @@ async function verifyOtp(email, code) {
     user: data.user,
   });
   return data;
+}
+
+/* ------------------------------------------------------------------ OAuth
+   Google (et tout futur provider OAuth) : redirection obligatoire, il n'y a
+   pas d'équivalent "code à taper" pour ce protocole. */
+
+/** Démarre la connexion Google — redirige vers Supabase qui gère l'échange OAuth. */
+function signInWithGoogle() {
+  const redirect = encodeURIComponent(location.origin + "/app");
+  location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirect}`;
+}
+
+/** Repère les jetons dans l'URL au retour d'un provider OAuth, ouvre la session. */
+async function consumeOAuthRedirect() {
+  if (!location.hash.includes("access_token")) return false;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
+  const expires_in = Number(params.get("expires_in") || 3600);
+  if (!access_token) return false;
+
+  history.replaceState(null, "", location.pathname + location.search);
+
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + access_token },
+  });
+  const user = resp.ok ? await resp.json() : null;
+  setSbSession({ access_token, refresh_token, expires_at: Date.now() + expires_in * 1000, user });
+  return true;
 }
 
 async function signOut() {

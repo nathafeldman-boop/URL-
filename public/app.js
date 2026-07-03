@@ -147,6 +147,8 @@ function renderAccessState() {
 
 function renderAccountUI() {
   const signedIn = isLoggedIn() && accessState.email;
+  document.getElementById("google-btn").hidden = signedIn;
+  document.getElementById("account-divider").hidden = signedIn;
   document.getElementById("signin-form").hidden = signedIn;
   // Le formulaire de code n'est réaffiché qu'explicitement après l'envoi
   // d'un code (cf. plus bas) — jamais par cette fonction, pour ne pas
@@ -162,7 +164,15 @@ function renderAccountUI() {
 }
 
 (async function initAccess() {
+  await consumeOAuthRedirect();
+
   const params = new URLSearchParams(location.search);
+  const oauthError = params.get("error_description");
+  if (oauthError) {
+    history.replaceState(null, "", "/app");
+    setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+  }
+
   const sessionId = params.get("session_id");
   if (sessionId) {
     history.replaceState(null, "", "/app");
@@ -494,6 +504,11 @@ codeForm.addEventListener("submit", async (e) => {
   } finally {
     btnCode.disabled = false;
   }
+});
+
+document.getElementById("google-btn").addEventListener("click", () => {
+  track("google_signin_clique");
+  signInWithGoogle();
 });
 
 document.getElementById("code-back").addEventListener("click", () => {
