@@ -40,12 +40,22 @@ Le projet est prêt pour Vercel (statique + fonction serverless) :
 lib/audit.js       Logique d'audit partagée : fetch de la page cible,
                    extraction des signaux (title, h1/h2, CTA, texte…),
                    appel de l'API Mistral, validation du rapport JSON
+lib/access.js      Contrôle d'accès : quota gratuit (cookie signé),
+                   jeton Pro anonyme, statut Pro/quota via Supabase
+lib/activate.js    Vérifie le paiement auprès de Stripe, délivre le
+                   jeton Pro et écrit le statut Pro sur le compte connecté
+lib/supabase.js    Client Supabase minimal (appels RPC PostgREST)
+lib/ratelimit.js   Limite de débit par IP (protège la facture Mistral)
 api/analyze.js     Fonction serverless Vercel (POST /api/analyze)
+api/compare.js     Fonction serverless Vercel (POST /api/compare)
+api/activate.js    Fonction serverless Vercel (POST /api/activate)
 server.js          Serveur de dev local zéro dépendance : statique + API
 vercel.json        Config Vercel (public/ en statique, maxDuration 60 s)
 public/
   index.html       Landing + rapport + pricing
+  app.html          Application (analyse, historique, paywall, compte)
   styles.css       Design system (blanc, accent indigo, ombres légères)
+  auth.js          Authentification Supabase (lien magique, session, historique)
   app.js           Soumission, états de chargement, rendu du rapport
 ```
 
@@ -61,10 +71,21 @@ public/
 | `STRIPE_PRICE_ID` | — | Optionnel : ID prix (`price_…`) du plan mensuel, court-circuite la résolution produit |
 | `STRIPE_PRICE_ID_ANNUAL` | — | Optionnel : ID prix (`price_…`) du plan annuel |
 | `PORT` | `3000` | Port du serveur |
+| `APP_SECRET` | — | Secret HMAC dédié (jetons Pro anonymes, cookie de quota, **et** vérification du secret partagé avec la fonction Postgres `apply_pro` — doit être identique à la valeur stockée dans `private.config`). À défaut, la clé Stripe sert de secret pour les jetons/cookies, mais `apply_pro` restera silencieusement inopérant sans elle. |
+| `SUPABASE_URL` | `https://fjrkpatehqtkiojpnzja.supabase.co` | Projet Supabase (comptes + quota nominatif + historique) |
+| `SUPABASE_ANON_KEY` | (clé publique du projet, en dur) | Clé anon publique, protégée par les politiques RLS côté base |
+
+## Comptes (Supabase)
+
+Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses) vit dans un cookie signé et l'historique dans le navigateur (localStorage). Se connecter (lien magique par email, sans mot de passe) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
+
+`public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) ; `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
+
+⚠️ **Avant une vraie mise en production avec des comptes** : le service d'email intégré de Supabase est très limité en volume (pensé pour les tests, pas pour l'envoi en masse) — configure un SMTP personnalisé dans Authentication → Emails avant d'espérer des liens magiques fiables à grande échelle. Vérifie aussi que l'URL de production est bien dans Authentication → URL Configuration → Redirect URLs, sans quoi le lien magique ne redirigera pas correctement.
 
 ## Limites connues (MVP)
 
 - Les sites rendus 100 % en JavaScript côté client renvoient peu de contenu : l'audit est refusé plutôt que d'inventer.
-- Gratuit : 2 analyses (compteur serveur via cookie signé) et 0 comparaison. Pro : illimité, activé par un jeton signé délivré après vérification du paiement auprès de Stripe (`/api/activate`), re-validé à chaque période. Sans base de données, effacer ses cookies remet le compteur gratuit à zéro — le passage en base rendra le quota nominatif.
-- L'historique des analyses est conservé en localStorage (20 dernières, par navigateur).
-- `APP_SECRET` (optionnel) : secret HMAC dédié pour signer jetons et cookies ; à défaut la clé Stripe sert de secret.
+- Gratuit sans compte : 2 analyses (compteur serveur via cookie signé) et 0 comparaison — effacer ses cookies remet le compteur à zéro. Gratuit avec compte : quota nominatif en base, ne se réinitialise pas en changeant de navigateur. Pro : illimité, activé par un jeton signé délivré après vérification du paiement auprès de Stripe (`/api/activate`), re-validé à chaque période ; si connecté, le statut Pro est aussi écrit sur le compte.
+- L'historique des analyses est en localStorage (20 dernières) hors connexion, synchronisé sur Supabase (20 dernières aussi) une fois connecté.
+- Rate limit basique en mémoire (30 requêtes/heure/IP sur `/api/analyze` et `/api/compare`) — protège des scripts naïfs, pas une vraie limite distribuée.

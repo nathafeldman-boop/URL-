@@ -49,25 +49,36 @@ function getProState() {
   }
 }
 
-function isPro() {
+/* Jeton Pro anonyme (achat sans compte), distinct du statut Pro d'un compte
+   connecté — voir accessState plus bas pour la vue unifiée des deux. */
+function hasAnonymousProToken() {
   const p = getProState();
   return !!(p && p.token && p.exp > Date.now());
 }
 
 function proHeaders() {
   const p = getProState();
-  return isPro() ? { Authorization: "Bearer " + p.token } : {};
+  return hasAnonymousProToken() ? { Authorization: "Bearer " + p.token } : {};
+}
+
+/* En-têtes d'authentification pour /api/analyze et /api/compare : priorité
+   à la session Supabase (compte), sinon au jeton Pro anonyme éventuel. */
+async function authHeaders() {
+  if (isLoggedIn()) return sbAuthHeaders();
+  return proHeaders();
 }
 
 async function activatePro(payload) {
-  const resp = await fetch("/api/activate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const headers = { "Content-Type": "application/json" };
+  const loggedIn = isLoggedIn();
+  if (loggedIn) Object.assign(headers, await sbAuthHeaders());
+  const resp = await fetch("/api/activate", { method: "POST", headers, body: JSON.stringify(payload) });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || "Activation impossible. Réessaie ou contacte-nous.");
-  localStorage.setItem(PRO_KEY, JSON.stringify(data));
+  // Le jeton anonyme n'est conservé que hors connexion : pour un compte, le
+  // statut Pro vit en base (apply_pro) — le garder ici survivrait à la
+  // déconnexion et laisserait l'accès Pro fuiter sur un appareil partagé.
+  if (!loggedIn) localStorage.setItem(PRO_KEY, JSON.stringify(data));
   return data;
 }
 
@@ -91,29 +102,64 @@ document.getElementById("compare-unlock").addEventListener("click", () =>
   openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.")
 );
 
+/* État d'accès unifié : compte Supabase (quota nominatif en base) en
+   priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie. */
+let accessState = { mode: "cookie", pro: false, remaining: null, email: null };
+
+async function refreshAccessState() {
+  if (isLoggedIn()) {
+    const q = await fetchQuotaStatus();
+    if (q) {
+      accessState = { mode: "supabase", pro: !!q.pro, remaining: q.remaining, email: getSbSession()?.user?.email || null };
+    } else {
+      // Session invalide/expirée et non rafraîchissable.
+      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, email: null };
+    }
+  } else if (hasAnonymousProToken()) {
+    accessState = { mode: "token", pro: true, remaining: null, email: null };
+  } else {
+    const raw = localStorage.getItem(QUOTA_LEFT_KEY);
+    accessState = { mode: "cookie", pro: false, remaining: raw === null ? null : Number(raw), email: null };
+  }
+  renderAccessState();
+  renderAccountUI();
+}
+
 function renderAccessState() {
-  const pro = isPro();
+  const { pro, remaining } = accessState;
   document.getElementById("pro-badge").hidden = !pro;
 
   const note = document.getElementById("quota-note");
   if (pro) {
     note.textContent = "Analyses illimitées avec ton plan Pro. Résultats en ~40 secondes.";
   } else {
-    const raw = localStorage.getItem(QUOTA_LEFT_KEY);
-    const left = raw === null ? null : Number(raw);
     note.textContent =
-      left === null
-        ? "2 analyses gratuites, sans compte. Résultats en ~40 secondes."
-        : left <= 0
+      remaining === null
+        ? "2 analyses gratuites. Résultats en ~40 secondes."
+        : remaining <= 0
           ? "Analyses gratuites épuisées — passe en Pro pour continuer en illimité."
-          : `Il te reste ${left} analyse${left > 1 ? "s" : ""} gratuite${left > 1 ? "s" : ""}. Résultats en ~40 secondes.`;
+          : `Il te reste ${remaining} analyse${remaining > 1 ? "s" : ""} gratuite${remaining > 1 ? "s" : ""}. Résultats en ~40 secondes.`;
   }
 
   document.getElementById("compare-form").hidden = !pro;
   document.getElementById("compare-lock").hidden = pro;
 }
 
-(async function initPro() {
+function renderAccountUI() {
+  const signedIn = isLoggedIn() && accessState.email;
+  document.getElementById("signin-form").hidden = signedIn;
+  document.getElementById("account-signed-in").hidden = !signedIn;
+  if (signedIn) {
+    document.getElementById("account-email").textContent = accessState.email;
+    const planEl = document.getElementById("account-plan");
+    planEl.textContent = accessState.pro ? "Pro" : "Gratuit";
+    planEl.classList.toggle("is-pro", accessState.pro);
+  }
+}
+
+(async function initAccess() {
+  await consumeMagicLinkFromUrl();
+
   const params = new URLSearchParams(location.search);
   const sessionId = params.get("session_id");
   if (sessionId) {
@@ -127,8 +173,8 @@ function renderAccessState() {
     } catch (err) {
       setError(err.message);
     }
-  } else {
-    // Jeton expiré mais abonnement connu → re-vérification silencieuse auprès de Stripe.
+  } else if (!isLoggedIn()) {
+    // Jeton anonyme expiré mais abonnement connu → re-vérification silencieuse auprès de Stripe.
     const p = getProState();
     if (p && p.sub && p.exp <= Date.now()) {
       try {
@@ -138,7 +184,24 @@ function renderAccessState() {
       }
     }
   }
-  renderAccessState();
+
+  // Achat fait avant la création d'un compte : on le relie au compte
+  // maintenant connecté (apply_pro avec le jeton Supabase), puis on efface
+  // le jeton anonyme local — le statut Pro vit désormais en base.
+  if (isLoggedIn()) {
+    const p = getProState();
+    if (p && p.sub) {
+      try {
+        await activatePro({ subscription: p.sub });
+      } catch {
+        /* abonnement expiré ou déjà lié : rien à faire */
+      } finally {
+        localStorage.removeItem(PRO_KEY);
+      }
+    }
+  }
+
+  await refreshAccessState();
 })();
 
 /* ------------------------------------------------------------ onboarding
@@ -187,13 +250,14 @@ form.addEventListener("submit", async (e) => {
   try {
     const resp = await fetch("/api/analyze", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...proHeaders() },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw }),
     });
     const data = await resp.json();
     if (!resp.ok) {
       if (data.code === "quota_epuise") {
-        localStorage.setItem(QUOTA_LEFT_KEY, "0");
+        accessState.remaining = 0;
+        if (accessState.mode === "cookie") localStorage.setItem(QUOTA_LEFT_KEY, "0");
         renderAccessState();
         openPaywall(data.error);
         return;
@@ -201,10 +265,15 @@ form.addEventListener("submit", async (e) => {
       throw new Error(data.error || "L'analyse a échoué. Réessaie.");
     }
     if (typeof data.quota_restant === "number") {
-      localStorage.setItem(QUOTA_LEFT_KEY, String(data.quota_restant));
+      accessState.remaining = data.quota_restant;
+      if (accessState.mode === "cookie") localStorage.setItem(QUOTA_LEFT_KEY, String(data.quota_restant));
       renderAccessState();
     }
-    addToHistory(data);
+    if (accessState.mode === "supabase") {
+      insertRemoteHistory(data);
+    } else {
+      addToHistory(data);
+    }
     renderReport(data);
     track("rapport_affiche");
   } catch (err) {
@@ -274,13 +343,24 @@ function addToHistory(data) {
   renderHistory();
 }
 
-function removeFromHistory(id) {
+async function removeFromHistory(id) {
+  if (accessState.mode === "supabase") {
+    await deleteRemoteHistory(id);
+    return renderHistory();
+  }
   saveHistory(loadHistory().filter((e) => e.id !== id));
   renderHistory();
 }
 
-function renderHistory() {
-  const list = loadHistory();
+/* Normalise une ligne Supabase (id, created_at) vers le même format que
+   les entrées locales (id, date) pour un rendu partagé. */
+function normalizeRemoteEntry(row) {
+  return { id: row.id, date: row.created_at, url: row.url, report: row.report, technologies: row.technologies, metrics: row.metrics };
+}
+
+async function renderHistory() {
+  const list = accessState.mode === "supabase" ? (await fetchRemoteHistory())?.map(normalizeRemoteEntry) || [] : loadHistory();
+
   historyEmpty.hidden = list.length > 0;
   historyClear.hidden = list.length === 0;
 
@@ -344,8 +424,45 @@ document.addEventListener("keydown", (e) => {
     paywall.hidden = true;
   }
 });
-historyClear.addEventListener("click", () => {
-  saveHistory([]);
+historyClear.addEventListener("click", async () => {
+  if (accessState.mode === "supabase") {
+    await clearRemoteHistory();
+  } else {
+    saveHistory([]);
+  }
+  renderHistory();
+});
+
+/* ------------------------------------------------------------------ compte */
+
+const signinForm = document.getElementById("signin-form");
+const signinMsg = document.getElementById("signin-msg");
+
+signinForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("signin-email").value.trim();
+  if (!email) return;
+  const btnSignin = document.getElementById("signin-btn");
+  btnSignin.disabled = true;
+  signinMsg.hidden = false;
+  signinMsg.className = "account-msg";
+  signinMsg.textContent = "Envoi du lien…";
+  try {
+    await requestMagicLink(email);
+    signinMsg.className = "account-msg is-ok";
+    signinMsg.textContent = "Lien envoyé ! Vérifie ta boîte mail (et les spams).";
+    track("magic_link_envoye");
+  } catch (err) {
+    signinMsg.className = "account-msg is-error";
+    signinMsg.textContent = err.message;
+  } finally {
+    btnSignin.disabled = false;
+  }
+});
+
+document.getElementById("signout-btn").addEventListener("click", async () => {
+  await signOut();
+  await refreshAccessState();
   renderHistory();
 });
 
@@ -361,7 +478,7 @@ compareForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const raw = compareInput.value.trim();
   if (!raw || !lastAnalysis) return;
-  if (!isPro()) {
+  if (!accessState.pro) {
     openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.");
     return;
   }
@@ -374,7 +491,7 @@ compareForm.addEventListener("submit", async (e) => {
   try {
     const resp = await fetch("/api/compare", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...proHeaders() },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw, competitor: { url: lastAnalysis.url, report: lastAnalysis.report } }),
     });
     const data = await resp.json();

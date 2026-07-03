@@ -1885,3 +1885,89 @@ body.report-view .bg-sky { opacity: 1; }
 
 .legal a { color: var(--accent); text-decoration: none; }
 .legal a:hover { text-decoration: underline; }
+
+/* --------------------------------------------------------------- compte */
+
+.drawer-account {
+  padding: 14px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(234, 242, 254, 0.35);
+}
+
+.account-hint {
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.account-row {
+  display: flex;
+  gap: 6px;
+}
+
+.account-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.account-row input:focus { border-color: var(--accent); }
+.account-row .btn { flex: none; white-space: nowrap; }
+
+.account-msg {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.account-msg.is-error { color: var(--bad); }
+.account-msg.is-ok { color: var(--good); }
+
+.account-signed-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.account-who {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.account-who span#account-email {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-plan {
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--border);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.account-plan.is-pro {
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, #1e5fd0 100%);
+}

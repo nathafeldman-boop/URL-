@@ -13,7 +13,7 @@ loadDotEnv();
 const { analyze, compare } = require("./lib/audit");
 const { createCheckout } = require("./lib/checkout");
 const { activate } = require("./lib/activate");
-const { checkAnalyze, checkCompare, FREE_LIMIT } = require("./lib/access");
+const { checkAnalyzeAccess, checkCompareAccess, FREE_LIMIT, bearerToken } = require("./lib/access");
 const { rateLimit } = require("./lib/ratelimit");
 
 const PORT = process.env.PORT || 3000;
@@ -52,28 +52,32 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url === "/api/activate") {
-        const { status, body } = await activate(payload);
+        const { status, body } = await activate(payload, bearerToken(req));
         return sendJson(res, status, body);
       }
 
-      if (req.url !== "/api/activate") {
-        const rl = rateLimit(req);
-        if (rl.limited) return sendJson(res, rl.error.status, rl.error.body);
-      }
+      const rl = rateLimit(req);
+      if (rl.limited) return sendJson(res, rl.error.status, rl.error.body);
 
       if (req.url === "/api/compare") {
-        const access = checkCompare(req);
+        const access = await checkCompareAccess(req);
         if (!access.allowed) return sendJson(res, access.error.status, access.error.body);
         const { status, body } = await compare(payload.url, payload.competitor);
         return sendJson(res, status, body);
       }
 
-      const access = checkAnalyze(req);
+      const access = await checkAnalyzeAccess(req);
       if (!access.allowed) return sendJson(res, access.error.status, access.error.body);
       const { status, body } = await analyze(payload.url);
-      if (status === 200 && !access.pro) {
+      if (status !== 200) {
+        if (access.refund) await access.refund();
+        return sendJson(res, status, body);
+      }
+      if (access.mode === "cookie" && !access.pro) {
         res.setHeader("Set-Cookie", access.consume());
         body.quota_restant = FREE_LIMIT - access.used - 1;
+      } else if (access.mode === "supabase" && !access.pro) {
+        body.quota_restant = access.remaining;
       }
       return sendJson(res, status, body);
     }

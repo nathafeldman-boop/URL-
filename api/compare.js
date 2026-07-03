@@ -1,8 +1,9 @@
 /* Fonction serverless Vercel : POST /api/compare
-   Compare le site de l'utilisateur au concurrent déjà analysé. Pro uniquement. */
+   Compare le site de l'utilisateur au concurrent déjà analysé. Pro uniquement
+   (jeton Pro anonyme ou compte Supabase avec abonnement actif). */
 
 const { compare } = require("../lib/audit");
-const { checkCompare } = require("../lib/access");
+const { checkCompareAccess } = require("../lib/access");
 const { rateLimit } = require("../lib/ratelimit");
 
 module.exports = async (req, res) => {
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
   const rl = rateLimit(req);
   if (rl.limited) return res.status(rl.error.status).json(rl.error.body);
 
-  const access = checkCompare(req);
+  const access = await checkCompareAccess(req);
   if (!access.allowed) {
     return res.status(access.error.status).json(access.error.body);
   }
