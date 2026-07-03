@@ -3,11 +3,14 @@
 
 const { analyze } = require("../lib/audit");
 const { checkAnalyze, FREE_LIMIT } = require("../lib/access");
+const { rateLimit } = require("../lib/ratelimit");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée." });
   }
+  const rl = rateLimit(req);
+  if (rl.limited) return res.status(rl.error.status).json(rl.error.body);
   let url = "";
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};

@@ -14,6 +14,7 @@ const { analyze, compare } = require("./lib/audit");
 const { createCheckout } = require("./lib/checkout");
 const { activate } = require("./lib/activate");
 const { checkAnalyze, checkCompare, FREE_LIMIT } = require("./lib/access");
+const { rateLimit } = require("./lib/ratelimit");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -53,6 +54,11 @@ const server = http.createServer(async (req, res) => {
       if (req.url === "/api/activate") {
         const { status, body } = await activate(payload);
         return sendJson(res, status, body);
+      }
+
+      if (req.url !== "/api/activate") {
+        const rl = rateLimit(req);
+        if (rl.limited) return sendJson(res, rl.error.status, rl.error.body);
       }
 
       if (req.url === "/api/compare") {

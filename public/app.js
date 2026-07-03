@@ -36,6 +36,11 @@ let lastAnalysis = null;
 const PRO_KEY = "verdict_pro";
 const QUOTA_LEFT_KEY = "verdict_quota_restant";
 
+/* Événement analytics Vercel (no-op si le script n'est pas chargé). */
+function track(name) {
+  if (typeof window.va === "function") window.va("event", { name });
+}
+
 function getProState() {
   try {
     return JSON.parse(localStorage.getItem(PRO_KEY)) || null;
@@ -71,6 +76,11 @@ const paywall = document.getElementById("paywall");
 function openPaywall(reason) {
   document.getElementById("paywall-reason").textContent = reason;
   paywall.hidden = false;
+  track("paywall_affiche");
+}
+
+for (const plan of paywall.querySelectorAll(".paywall-plan")) {
+  plan.addEventListener("click", () => track("checkout_clique"));
 }
 
 document.getElementById("paywall-close").addEventListener("click", () => (paywall.hidden = true));
@@ -110,6 +120,7 @@ function renderAccessState() {
     history.replaceState(null, "", "/app");
     try {
       await activatePro({ session_id: sessionId });
+      track("pro_active");
       const toast = document.getElementById("pro-toast");
       toast.hidden = false;
       setTimeout(() => (toast.hidden = true), 6000);
@@ -171,6 +182,7 @@ form.addEventListener("submit", async (e) => {
   setError(null);
   reportEl.hidden = true;
   startLoading(raw);
+  track("analyse_lancee");
 
   try {
     const resp = await fetch("/api/analyze", {
@@ -194,6 +206,7 @@ form.addEventListener("submit", async (e) => {
     }
     addToHistory(data);
     renderReport(data);
+    track("rapport_affiche");
   } catch (err) {
     setError(err.message === "Failed to fetch" ? "Connexion au serveur impossible." : err.message);
   } finally {
@@ -373,6 +386,7 @@ compareForm.addEventListener("submit", async (e) => {
       throw new Error(data.error || "La comparaison a échoué. Réessaie.");
     }
     renderCompare(data);
+    track("comparaison_affichee");
   } catch (err) {
     compareErrorEl.hidden = false;
     compareErrorEl.textContent = err.message === "Failed to fetch" ? "Connexion au serveur impossible." : err.message;

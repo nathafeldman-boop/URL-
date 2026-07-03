@@ -3,11 +3,14 @@
 
 const { compare } = require("../lib/audit");
 const { checkCompare } = require("../lib/access");
+const { rateLimit } = require("../lib/ratelimit");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée." });
   }
+  const rl = rateLimit(req);
+  if (rl.limited) return res.status(rl.error.status).json(rl.error.body);
 
   const access = checkCompare(req);
   if (!access.allowed) {
