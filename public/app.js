@@ -104,22 +104,28 @@ document.getElementById("compare-unlock").addEventListener("click", () =>
 
 /* État d'accès unifié : compte Supabase (quota nominatif en base) en
    priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie. */
-let accessState = { mode: "cookie", pro: false, remaining: null, email: null };
+let accessState = { mode: "cookie", pro: false, remaining: null, email: null, proUntil: null };
 
 async function refreshAccessState() {
   if (isLoggedIn()) {
     const q = await fetchQuotaStatus();
     if (q) {
-      accessState = { mode: "supabase", pro: !!q.pro, remaining: q.remaining, email: getSbSession()?.user?.email || null };
+      accessState = {
+        mode: "supabase",
+        pro: !!q.pro,
+        remaining: q.remaining,
+        email: getSbSession()?.user?.email || null,
+        proUntil: q.pro_until || null,
+      };
     } else {
       // Session invalide/expirée et non rafraîchissable.
-      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, email: null };
+      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, email: null, proUntil: getProState()?.exp || null };
     }
   } else if (hasAnonymousProToken()) {
-    accessState = { mode: "token", pro: true, remaining: null, email: null };
+    accessState = { mode: "token", pro: true, remaining: null, email: null, proUntil: getProState()?.exp || null };
   } else {
     const raw = localStorage.getItem(QUOTA_LEFT_KEY);
-    accessState = { mode: "cookie", pro: false, remaining: raw === null ? null : Number(raw), email: null };
+    accessState = { mode: "cookie", pro: false, remaining: raw === null ? null : Number(raw), email: null, proUntil: null };
   }
   renderAccessState();
   renderAccountUI();
@@ -160,6 +166,16 @@ function renderAccountUI() {
     const planEl = document.getElementById("account-plan");
     planEl.textContent = accessState.pro ? "Pro" : "Gratuit";
     planEl.classList.toggle("is-pro", accessState.pro);
+  }
+
+  // Accès au portail Stripe : visible dès qu'on est Pro, connecté ou non
+  // (un achat anonyme donne aussi droit à gérer son abonnement).
+  document.getElementById("billing-block").hidden = !accessState.pro;
+  if (accessState.pro) {
+    const renewal = document.getElementById("billing-renewal");
+    renewal.textContent = accessState.proUntil
+      ? "Renouvellement le " + new Date(accessState.proUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+      : "";
   }
 }
 
@@ -523,6 +539,21 @@ document.getElementById("signout-btn").addEventListener("click", async () => {
   await signOut();
   await refreshAccessState();
   renderHistory();
+});
+
+document.getElementById("billing-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("billing-btn");
+  btn.disabled = true;
+  try {
+    const resp = await fetch("/api/billing-portal", { method: "POST", headers: await authHeaders() });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "Impossible d'ouvrir ton espace abonnement. Réessaie dans un instant.");
+    track("portail_stripe_ouvert");
+    location.href = data.url;
+  } catch (err) {
+    setError(err.message === "Failed to fetch" ? "Connexion au serveur impossible." : err.message);
+    btn.disabled = false;
+  }
 });
 
 /* ----------------------------------------------------------- comparaison */

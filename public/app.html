@@ -83,6 +83,12 @@
         </div>
         <button class="btn btn-ghost btn-sm" id="signout-btn" type="button">Se déconnecter</button>
       </div>
+
+      <!-- Portail Stripe : visible dès qu'on est Pro, connecté ou non -->
+      <div class="billing-block" id="billing-block" hidden>
+        <p class="billing-renewal" id="billing-renewal"></p>
+        <button class="btn btn-ghost btn-sm" id="billing-btn" type="button">Gérer mon abonnement</button>
+      </div>
     </div>
 
     <p class="drawer-empty" id="history-empty">Aucune analyse pour l'instant. Décode ton premier site et il apparaîtra ici.</p>

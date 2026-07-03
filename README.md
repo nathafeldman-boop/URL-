@@ -45,10 +45,13 @@ lib/access.js      Contrôle d'accès : quota gratuit (cookie signé),
 lib/activate.js    Vérifie le paiement auprès de Stripe, délivre le
                    jeton Pro et écrit le statut Pro sur le compte connecté
 lib/supabase.js    Client Supabase minimal (appels RPC PostgREST)
+lib/billing.js     Portail client Stripe (factures, moyen de paiement,
+                   résiliation en libre-service — aucune logique custom)
 lib/ratelimit.js   Limite de débit par IP (protège la facture Mistral)
 api/analyze.js     Fonction serverless Vercel (POST /api/analyze)
 api/compare.js     Fonction serverless Vercel (POST /api/compare)
 api/activate.js    Fonction serverless Vercel (POST /api/activate)
+api/billing-portal.js  Fonction serverless Vercel (POST /api/billing-portal)
 server.js          Serveur de dev local zéro dépendance : statique + API
 vercel.json        Config Vercel (public/ en statique, maxDuration 60 s)
 public/
@@ -80,6 +83,14 @@ public/
 Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses) vit dans un cookie signé et l'historique dans le navigateur (localStorage). Se connecter (Google, ou email → code à 6 chiffres sans mot de passe ni lien à cliquer) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
 
 `public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) : `requestOtp(email)` / `verifyOtp(email, code)` pour le code par email ; `signInWithGoogle()` / `consumeOAuthRedirect()` pour Google (redirection obligatoire — c'est le protocole OAuth, pas un email, donc pas le problème de lien pré-chargé qui affectait le lien magique). `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
+
+### Gérer son abonnement (portail Stripe)
+
+Un bouton « Gérer mon abonnement » apparaît dans le tiroir historique dès que le statut Pro est actif — connecté ou non (un achat anonyme y donne aussi droit). Il ouvre le [Customer Portal](https://stripe.com/docs/customer-management) de Stripe : factures, moyen de paiement, et résiliation en libre-service, sans qu'aucune logique d'annulation ne soit codée côté Verdict.
+
+`POST /api/billing-portal` résout l'ID client Stripe selon le mode d'accès (fonction `get_billing_info()` pour un compte, sinon lecture de l'abonnement associé au jeton Pro anonyme), puis crée la session de portail.
+
+⚠️ Le **Customer Portal doit être activé au moins une fois** dans Stripe (Dashboard → Settings → Billing → Customer portal → Activate) avant que l'API puisse créer des sessions.
 
 ⚠️ **Réglages Supabase uniquement accessibles depuis le dashboard** (aucune API ne les expose, donc à faire manuellement une seule fois) :
 1. **Authentication → Emails → Enable custom SMTP** : le service d'email intégré de Supabase est très limité en volume — configure un vrai fournisseur SMTP (Resend, Brevo…) avant d'espérer des envois fiables à volume réel.

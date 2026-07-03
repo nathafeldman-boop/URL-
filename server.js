@@ -13,6 +13,7 @@ loadDotEnv();
 const { analyze, compare } = require("./lib/audit");
 const { createCheckout } = require("./lib/checkout");
 const { activate } = require("./lib/activate");
+const { createPortalSession } = require("./lib/billing");
 const { checkAnalyzeAccess, checkCompareAccess, FREE_LIMIT, bearerToken } = require("./lib/access");
 const { rateLimit } = require("./lib/ratelimit");
 
@@ -43,6 +44,10 @@ function loadDotEnv() {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.method === "POST" && req.url === "/api/billing-portal") {
+      const { status, body } = await createPortalSession(bearerToken(req), `http://localhost:${PORT}/app`);
+      return sendJson(res, status, body);
+    }
     if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare" || req.url === "/api/activate")) {
       let payload;
       try {
