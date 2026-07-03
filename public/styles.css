@@ -63,7 +63,8 @@ body {
   letter-spacing: -0.01em;
 }
 
-.nav-logo { display: flex; }
+.nav-logo { display: flex; align-items: center; }
+.nav-logo img { display: block; }
 
 .nav-links {
   display: flex;
