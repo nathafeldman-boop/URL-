@@ -1662,6 +1662,8 @@ body.report-view .bg-sky { opacity: 1; }
 .paywall {
   position: relative;
   width: min(520px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   text-align: center;
   padding: 36px 32px 28px;
 }
@@ -1791,6 +1793,49 @@ body.report-view .bg-sky { opacity: 1; }
   box-shadow: 0 8px 30px rgba(20, 20, 30, 0.25);
 }
 
-@media (max-width: 520px) {
-  .paywall-plans { grid-template-columns: 1fr; }
+/* -------------------------------------------------- tarifs & paywall mobile */
+
+@media (max-width: 780px) {
+  /* Les cartes tarifs de la landing s'empilent (l'annuelle d'abord via order:-1). */
+  .pricing.pricing-duo { grid-template-columns: 1fr; }
+  .price-card .btn { text-align: center; }
+}
+
+@media (max-width: 640px) {
+  /* Le paywall devient une bottom sheet : panneau qui monte du bas,
+     coins arrondis en haut, plans compacts, scroll interne. */
+  .paywall-overlay { align-items: flex-end; padding: 0; }
+
+  .paywall {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 26px 20px calc(24px + env(safe-area-inset-bottom));
+    animation: paywall-up 220ms ease;
+  }
+
+  .paywall-title { font-size: 19px; }
+  .paywall-reason { margin-bottom: 20px; font-size: 13.5px; }
+
+  /* Plans en rangées compactes : prix à gauche, argument à droite. */
+  .paywall-plans { grid-template-columns: 1fr; gap: 10px; }
+
+  .paywall-plan {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 7px;
+    padding: 16px 16px;
+  }
+
+  .paywall-plan b { font-size: 21px; }
+  .paywall-plan i { margin: 0 0 0 auto; text-align: right; }
+  .paywall-plan.featured { margin-top: 8px; }
+  .paywall-plan em { top: -9px; left: 14px; }
+
+  .paywall-perks { max-width: none; }
+}
+
+@keyframes paywall-up {
+  from { transform: translateY(28px); opacity: 0.5; }
+  to { transform: none; opacity: 1; }
 }
