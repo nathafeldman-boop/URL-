@@ -65,4 +65,6 @@ public/
 ## Limites connues (MVP)
 
 - Les sites rendus 100 % en JavaScript côté client renvoient peu de contenu : l'audit est refusé plutôt que d'inventer.
-- Pas encore de comptes ni de limite d'usage. L'historique des analyses est conservé en localStorage (20 dernières, par navigateur).
+- Gratuit : 2 analyses (compteur serveur via cookie signé) et 0 comparaison. Pro : illimité, activé par un jeton signé délivré après vérification du paiement auprès de Stripe (`/api/activate`), re-validé à chaque période. Sans base de données, effacer ses cookies remet le compteur gratuit à zéro — le passage en base rendra le quota nominatif.
+- L'historique des analyses est conservé en localStorage (20 dernières, par navigateur).
+- `APP_SECRET` (optionnel) : secret HMAC dédié pour signer jetons et cookies ; à défaut la clé Stripe sert de secret.

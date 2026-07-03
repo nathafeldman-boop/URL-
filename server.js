@@ -12,6 +12,8 @@ loadDotEnv();
 
 const { analyze, compare } = require("./lib/audit");
 const { createCheckout } = require("./lib/checkout");
+const { activate } = require("./lib/activate");
+const { checkAnalyze, checkCompare, FREE_LIMIT } = require("./lib/access");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -40,17 +42,33 @@ function loadDotEnv() {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare")) {
+    if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare" || req.url === "/api/activate")) {
       let payload;
       try {
         payload = JSON.parse(await readBody(req, 256 * 1024));
       } catch {
         return sendJson(res, 400, { error: "Corps de requête invalide." });
       }
-      const { status, body } =
-        req.url === "/api/compare"
-          ? await compare(payload.url, payload.competitor)
-          : await analyze(payload.url);
+
+      if (req.url === "/api/activate") {
+        const { status, body } = await activate(payload);
+        return sendJson(res, status, body);
+      }
+
+      if (req.url === "/api/compare") {
+        const access = checkCompare(req);
+        if (!access.allowed) return sendJson(res, access.error.status, access.error.body);
+        const { status, body } = await compare(payload.url, payload.competitor);
+        return sendJson(res, status, body);
+      }
+
+      const access = checkAnalyze(req);
+      if (!access.allowed) return sendJson(res, access.error.status, access.error.body);
+      const { status, body } = await analyze(payload.url);
+      if (status === 200 && !access.pro) {
+        res.setHeader("Set-Cookie", access.consume());
+        body.quota_restant = FREE_LIMIT - access.used - 1;
+      }
       return sendJson(res, status, body);
     }
     if (req.method === "GET" && req.url.split("?")[0] === "/api/checkout") {

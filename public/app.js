@@ -28,6 +28,108 @@ let progressTimer = null;
 // Dernière analyse concurrent, réutilisée par la comparaison.
 let lastAnalysis = null;
 
+/* ------------------------------------------------------------------- pro
+   Le jeton Pro (signé côté serveur après vérification Stripe) vit en
+   localStorage. Gratuit : 2 analyses (compteur serveur via cookie signé),
+   comparaison verrouillée. */
+
+const PRO_KEY = "verdict_pro";
+const QUOTA_LEFT_KEY = "verdict_quota_restant";
+
+function getProState() {
+  try {
+    return JSON.parse(localStorage.getItem(PRO_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function isPro() {
+  const p = getProState();
+  return !!(p && p.token && p.exp > Date.now());
+}
+
+function proHeaders() {
+  const p = getProState();
+  return isPro() ? { Authorization: "Bearer " + p.token } : {};
+}
+
+async function activatePro(payload) {
+  const resp = await fetch("/api/activate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || "Activation impossible. Réessaie ou contacte-nous.");
+  localStorage.setItem(PRO_KEY, JSON.stringify(data));
+  return data;
+}
+
+const paywall = document.getElementById("paywall");
+
+function openPaywall(reason) {
+  document.getElementById("paywall-reason").textContent = reason;
+  paywall.hidden = false;
+}
+
+document.getElementById("paywall-close").addEventListener("click", () => (paywall.hidden = true));
+paywall.addEventListener("click", (e) => {
+  if (e.target === paywall) paywall.hidden = true;
+});
+document.getElementById("compare-unlock").addEventListener("click", () =>
+  openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.")
+);
+
+function renderAccessState() {
+  const pro = isPro();
+  document.getElementById("pro-badge").hidden = !pro;
+
+  const note = document.getElementById("quota-note");
+  if (pro) {
+    note.textContent = "Analyses illimitées avec ton plan Pro. Résultats en ~40 secondes.";
+  } else {
+    const raw = localStorage.getItem(QUOTA_LEFT_KEY);
+    const left = raw === null ? null : Number(raw);
+    note.textContent =
+      left === null
+        ? "2 analyses gratuites, sans compte. Résultats en ~40 secondes."
+        : left <= 0
+          ? "Analyses gratuites épuisées — passe en Pro pour continuer en illimité."
+          : `Il te reste ${left} analyse${left > 1 ? "s" : ""} gratuite${left > 1 ? "s" : ""}. Résultats en ~40 secondes.`;
+  }
+
+  document.getElementById("compare-form").hidden = !pro;
+  document.getElementById("compare-lock").hidden = pro;
+}
+
+(async function initPro() {
+  const params = new URLSearchParams(location.search);
+  const sessionId = params.get("session_id");
+  if (sessionId) {
+    history.replaceState(null, "", "/app");
+    try {
+      await activatePro({ session_id: sessionId });
+      const toast = document.getElementById("pro-toast");
+      toast.hidden = false;
+      setTimeout(() => (toast.hidden = true), 6000);
+    } catch (err) {
+      setError(err.message);
+    }
+  } else {
+    // Jeton expiré mais abonnement connu → re-vérification silencieuse auprès de Stripe.
+    const p = getProState();
+    if (p && p.sub && p.exp <= Date.now()) {
+      try {
+        await activatePro({ subscription: p.sub });
+      } catch {
+        localStorage.removeItem(PRO_KEY);
+      }
+    }
+  }
+  renderAccessState();
+})();
+
 /* ------------------------------------------------------------ onboarding
    Micro-expérience de bienvenue (~9 s), affichée une seule fois. */
 (function onboarding() {
@@ -73,11 +175,23 @@ form.addEventListener("submit", async (e) => {
   try {
     const resp = await fetch("/api/analyze", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...proHeaders() },
       body: JSON.stringify({ url: raw }),
     });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "L'analyse a échoué. Réessaie.");
+    if (!resp.ok) {
+      if (data.code === "quota_epuise") {
+        localStorage.setItem(QUOTA_LEFT_KEY, "0");
+        renderAccessState();
+        openPaywall(data.error);
+        return;
+      }
+      throw new Error(data.error || "L'analyse a échoué. Réessaie.");
+    }
+    if (typeof data.quota_restant === "number") {
+      localStorage.setItem(QUOTA_LEFT_KEY, String(data.quota_restant));
+      renderAccessState();
+    }
     addToHistory(data);
     renderReport(data);
   } catch (err) {
@@ -212,7 +326,10 @@ historyToggle.addEventListener("click", () => {
 document.getElementById("history-close").addEventListener("click", closeDrawer);
 drawerOverlay.addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeDrawer();
+  if (e.key === "Escape") {
+    closeDrawer();
+    paywall.hidden = true;
+  }
 });
 historyClear.addEventListener("click", () => {
   saveHistory([]);
@@ -231,6 +348,10 @@ compareForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const raw = compareInput.value.trim();
   if (!raw || !lastAnalysis) return;
+  if (!isPro()) {
+    openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.");
+    return;
+  }
 
   compareErrorEl.hidden = true;
   compareEl.hidden = true;
@@ -240,11 +361,17 @@ compareForm.addEventListener("submit", async (e) => {
   try {
     const resp = await fetch("/api/compare", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...proHeaders() },
       body: JSON.stringify({ url: raw, competitor: { url: lastAnalysis.url, report: lastAnalysis.report } }),
     });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "La comparaison a échoué. Réessaie.");
+    if (!resp.ok) {
+      if (data.code === "pro_requis") {
+        openPaywall(data.error);
+        return;
+      }
+      throw new Error(data.error || "La comparaison a échoué. Réessaie.");
+    }
     renderCompare(data);
   } catch (err) {
     compareErrorEl.hidden = false;

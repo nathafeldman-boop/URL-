@@ -19,6 +19,7 @@
         <svg viewBox="0 0 32 32" width="22" height="22"><rect width="32" height="32" rx="8" fill="#2E7CF6"/><path d="M9 11l7 11 7-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
       </span>
       Verdict
+      <span class="pro-badge" id="pro-badge" hidden>Pro</span>
     </a>
     <nav class="nav-links">
       <a href="/#comment">Comment ça marche</a>
@@ -45,6 +46,36 @@
       <button class="btn btn-ghost btn-sm" id="history-clear" type="button" hidden>Tout effacer</button>
     </div>
   </aside>
+
+  <!-- ========================================================== Paywall -->
+  <div class="paywall-overlay" id="paywall" hidden>
+    <div class="paywall card" role="dialog" aria-modal="true" aria-labelledby="paywall-title">
+      <button class="drawer-close paywall-close" id="paywall-close" type="button" aria-label="Fermer">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <h3 class="paywall-title" id="paywall-title">Passe en illimité</h3>
+      <p class="paywall-reason" id="paywall-reason"></p>
+      <div class="paywall-plans">
+        <a class="paywall-plan" href="/api/checkout?plan=mensuel">
+          <b>15 €</b><span>/mois</span>
+          <i>Sans engagement</i>
+        </a>
+        <a class="paywall-plan featured" href="/api/checkout?plan=annuel">
+          <em>Économise 80 €</em>
+          <b>100 €</b><span>/an</span>
+          <i>Soit 8,33 €/mois</i>
+        </a>
+      </div>
+      <ul class="paywall-perks">
+        <li>Analyses illimitées de n'importe quel site</li>
+        <li>Comparaison avec ton propre site + plan d'action</li>
+        <li>Historique complet de tes décodages</li>
+      </ul>
+      <p class="price-note">Paiement sécurisé par Stripe. Résiliable en un clic.</p>
+    </div>
+  </div>
+
+  <div class="pro-toast" id="pro-toast" hidden>🎉 Paiement confirmé — analyses illimitées activées.</div>
 
   <!-- ====================================================== Onboarding -->
   <div class="onboarding" id="onboarding" hidden>
@@ -118,7 +149,7 @@
             />
             <button class="btn btn-primary" id="analyze-btn" type="submit">Lancer l'analyse</button>
           </form>
-          <p class="hero-note">Aucun compte requis pour la première analyse. Résultats en ~40 secondes.</p>
+          <p class="hero-note" id="quota-note">2 analyses gratuites, sans compte. Résultats en ~40 secondes.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </div>
 
@@ -299,6 +330,11 @@
           />
           <button class="btn btn-primary" id="compare-btn" type="submit">Comparer avec mon site</button>
         </form>
+        <div class="compare-lock" id="compare-lock" hidden>
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="9" width="12" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 9V6.5a3 3 0 016 0V9" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>Réservé aux membres Pro</span>
+          <button class="btn btn-primary" id="compare-unlock" type="button">Débloquer la comparaison</button>
+        </div>
         <p class="form-error" id="compare-error" role="alert" hidden></p>
       </div>
 

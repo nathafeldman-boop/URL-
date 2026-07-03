@@ -1,12 +1,19 @@
 /* Fonction serverless Vercel : POST /api/compare
-   Compare le site de l'utilisateur au concurrent déjà analysé. */
+   Compare le site de l'utilisateur au concurrent déjà analysé. Pro uniquement. */
 
 const { compare } = require("../lib/audit");
+const { checkCompare } = require("../lib/access");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée." });
   }
+
+  const access = checkCompare(req);
+  if (!access.allowed) {
+    return res.status(access.error.status).json(access.error.body);
+  }
+
   let payload;
   try {
     payload = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
