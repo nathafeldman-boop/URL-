@@ -188,9 +188,11 @@ function renderAccountUI() {
   }
 
   // Accès au portail Stripe : visible dès qu'on est Pro, connecté ou non
-  // (un achat anonyme donne aussi droit à gérer son abonnement).
-  document.getElementById("billing-block").hidden = !accessState.pro;
-  if (accessState.pro) {
+  // (un achat anonyme donne aussi droit à gérer son abonnement) — sauf pour
+  // le jeton propriétaire, qui n'a aucun abonnement Stripe à gérer.
+  const isOwnerToken = accessState.mode === "token" && getProState()?.sub === "owner-gratuit";
+  document.getElementById("billing-block").hidden = !accessState.pro || isOwnerToken;
+  if (accessState.pro && !isOwnerToken) {
     const renewal = document.getElementById("billing-renewal");
     renewal.textContent = accessState.proUntil
       ? "Renouvellement le " + new Date(accessState.proUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
@@ -209,6 +211,7 @@ function renderAccountUI() {
   }
 
   const sessionId = params.get("session_id");
+  const ownerSecret = params.get("owner_token");
   if (sessionId) {
     history.replaceState(null, "", "/app");
     try {
@@ -220,10 +223,27 @@ function renderAccountUI() {
     } catch (err) {
       setError(err.message);
     }
+  } else if (ownerSecret) {
+    // Activation propriétaire : jeton Pro permanent, sans abonnement Stripe
+    // réel — voir lib/owner.js. Le lien n'est jamais affiché dans l'UI.
+    history.replaceState(null, "", "/app");
+    try {
+      const resp = await fetch("/api/owner-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: ownerSecret }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Jeton invalide.");
+      localStorage.setItem(PRO_KEY, JSON.stringify(data));
+    } catch (err) {
+      setError(err.message);
+    }
   } else if (!isLoggedIn()) {
     // Jeton anonyme expiré mais abonnement connu → re-vérification silencieuse auprès de Stripe.
+    // (un jeton propriétaire n'expire pas avant 100 ans, donc jamais concerné ici)
     const p = getProState();
-    if (p && p.sub && p.exp <= Date.now()) {
+    if (p && /^sub_/.test(p.sub || "") && p.exp <= Date.now()) {
       try {
         await activatePro({ subscription: p.sub });
       } catch {
@@ -234,10 +254,11 @@ function renderAccountUI() {
 
   // Achat fait avant la création d'un compte : on le relie au compte
   // maintenant connecté (apply_pro avec le jeton Supabase), puis on efface
-  // le jeton anonyme local — le statut Pro vit désormais en base.
+  // le jeton anonyme local — le statut Pro vit désormais en base. Un jeton
+  // propriétaire (sub non-Stripe) n'a rien à lier : on le laisse tel quel.
   if (isLoggedIn()) {
     const p = getProState();
-    if (p && p.sub) {
+    if (p && /^sub_/.test(p.sub || "")) {
       try {
         await activatePro({ subscription: p.sub });
       } catch {

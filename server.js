@@ -13,6 +13,7 @@ loadDotEnv();
 const { analyze, compare } = require("./lib/audit");
 const { createCheckout } = require("./lib/checkout");
 const { activate } = require("./lib/activate");
+const { issueOwnerToken } = require("./lib/owner");
 const { createPortalSession } = require("./lib/billing");
 const { checkAnalyzeAccess, checkCompareAccess, FREE_LIMIT, bearerToken } = require("./lib/access");
 const { rateLimit } = require("./lib/ratelimit");
@@ -48,7 +49,7 @@ const server = http.createServer(async (req, res) => {
       const { status, body } = await createPortalSession(bearerToken(req), `http://localhost:${PORT}/app`);
       return sendJson(res, status, body);
     }
-    if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare" || req.url === "/api/activate")) {
+    if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare" || req.url === "/api/activate" || req.url === "/api/owner-token")) {
       let payload;
       try {
         payload = JSON.parse(await readBody(req, 256 * 1024));
@@ -58,6 +59,11 @@ const server = http.createServer(async (req, res) => {
 
       if (req.url === "/api/activate") {
         const { status, body } = await activate(payload, bearerToken(req));
+        return sendJson(res, status, body);
+      }
+
+      if (req.url === "/api/owner-token") {
+        const { status, body } = issueOwnerToken(payload.secret);
         return sendJson(res, status, body);
       }
 
