@@ -39,11 +39,8 @@
   <main>
 
     <!-- ============================================================ Hero -->
-    <section class="hero hero-video">
-      <video class="hero-bg" autoplay muted loop playsinline preload="metadata" poster="/assets/hero-poster.webp" aria-hidden="true">
-        <source src="/assets/hero-bg.mp4" type="video/mp4" />
-      </video>
-      <div class="hero-scrim" aria-hidden="true"></div>
+    <section class="hero hero-dark">
+      <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-content">
         <p class="hero-eyebrow">Reverse engineering de business en ligne</p>
         <h1 class="hero-title">Analyse n'importe quel <span class="hero-title-accent">site web</span> et comprends pourquoi il vend.</h1>
@@ -62,20 +59,20 @@
 
 
     <section class="section" id="comment">
-      <h2 class="section-title">De l'URL au plan d'action</h2>
-      <p class="section-sub">Ce qu'un consultant en stratégie te facturerait 400 €, en 40 secondes.</p>
+      <h2 class="section-title reveal">De l'URL au plan d'action</h2>
+      <p class="section-sub reveal">Ce qu'un consultant en stratégie te facturerait 400 €, en 40 secondes.</p>
       <div class="steps">
-        <div class="step card">
+        <div class="step card reveal">
           <span class="step-num">1</span>
           <h3>Colle l'URL d'un site qui marche</h3>
           <p>Un concurrent, un leader de ton marché, un site dont tu envies les résultats.</p>
         </div>
-        <div class="step card">
+        <div class="step card reveal reveal-1">
           <span class="step-num">2</span>
           <h3>On décode sa stratégie</h3>
           <p>Acquisition, positionnement, structure, copywriting, éléments de confiance, CTA : chaque mécanisme est expliqué.</p>
         </div>
-        <div class="step card">
+        <div class="step card reveal reveal-2">
           <span class="step-num">3</span>
           <h3>Tu compares avec ton site</h3>
           <p>Colle ensuite ta propre URL : verdict face au concurrent, écarts à combler, et tes 3 priorités pour vendre autant.</p>
@@ -85,9 +82,9 @@
 
     <!-- ========================================================== Exemple -->
     <section class="section" id="exemple">
-      <h2 class="section-title">À quoi ressemble un décodage</h2>
-      <p class="section-sub">Extrait réel du rapport que tu reçois.</p>
-      <div class="demo card">
+      <h2 class="section-title reveal">À quoi ressemble un décodage</h2>
+      <p class="section-sub reveal">Extrait réel du rapport que tu reçois.</p>
+      <div class="demo card reveal">
         <div class="demo-head">
           <span class="report-domain">acme-saas.com</span>
           <div class="chips">
@@ -114,10 +111,10 @@
 
     <!-- =========================================================== Tarifs -->
     <section class="section" id="tarifs">
-      <h2 class="section-title">Un plan simple, sans surprise</h2>
-      <p class="section-sub">Moins cher qu'une heure de consultant. Résiliable en un clic.</p>
+      <h2 class="section-title reveal">Un plan simple, sans surprise</h2>
+      <p class="section-sub reveal">Moins cher qu'une heure de consultant. Résiliable en un clic.</p>
       <div class="pricing pricing-duo">
-        <div class="price-card card">
+        <div class="price-card card reveal">
           <h3>Verdict Pro — Mensuel</h3>
           <p class="price"><b>15 €</b><span>/mois</span></p>
           <p class="price-desc">Pour tester Verdict sans engagement.</p>
@@ -130,7 +127,7 @@
           <a href="/api/checkout?plan=mensuel" class="btn btn-ghost">Passer en Pro — 15 €/mois</a>
           <p class="price-note">Paiement sécurisé par Stripe.</p>
         </div>
-        <div class="price-card card featured">
+        <div class="price-card card featured reveal reveal-1">
           <span class="price-badge">Économise 80 €</span>
           <h3>Verdict Pro — Annuel</h3>
           <p class="price"><b>100 €</b><span>/an</span><span class="price-was">180 €</span></p>
@@ -159,5 +156,6 @@
     </nav>
   </footer>
 
+  <script defer src="/reveal.js"></script>
 </body>
 </html>
