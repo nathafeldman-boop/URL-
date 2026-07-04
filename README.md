@@ -77,12 +77,17 @@ public/
 | `APP_SECRET` | — | Secret HMAC dédié (jetons Pro anonymes, cookie de quota, **et** vérification du secret partagé avec la fonction Postgres `apply_pro` — doit être identique à la valeur stockée dans `private.config`). À défaut, la clé Stripe sert de secret pour les jetons/cookies, mais `apply_pro` restera silencieusement inopérant sans elle. |
 | `SUPABASE_URL` | `https://fjrkpatehqtkiojpnzja.supabase.co` | Projet Supabase (comptes + quota nominatif + historique) |
 | `SUPABASE_ANON_KEY` | (clé publique du projet, en dur) | Clé anon publique, protégée par les politiques RLS côté base |
+| `OWNER_SECRET` | — | Secret dédié à l'accès propriétaire (`/api/owner-token`, voir ci-dessous) — sans lien avec `APP_SECRET` |
 
 ## Comptes (Supabase)
 
 Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses, 1 comparaison) vit dans des cookies signés et l'historique dans le navigateur (localStorage). Se connecter (Google, ou email → code à 6 chiffres sans mot de passe ni lien à cliquer) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `consume_comparison`, `refund_comparison`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
 
 `public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) : `requestOtp(email)` / `verifyOtp(email, code)` pour le code par email ; `signInWithGoogle()` / `consumeOAuthRedirect()` pour Google (redirection obligatoire — c'est le protocole OAuth, pas un email, donc pas le problème de lien pré-chargé qui affectait le lien magique). `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
+
+### Accès propriétaire (gratuit, illimité, sans Stripe)
+
+`POST /api/owner-token` (protégé par `OWNER_SECRET`) délivre un jeton Pro permanent (100 ans), sans passer par un abonnement Stripe réel — pour que l'exploitant du SaaS utilise son propre produit sans payer. Il n'a rien d'un compte à créer : on visite une fois `/app?owner_token=<OWNER_SECRET>` (jamais affiché dans l'UI, à garder pour soi comme un mot de passe) et le jeton se stocke en localStorage comme n'importe quel jeton Pro. Comme il n'a pas de véritable abonnement Stripe associé, le bloc « Gérer mon abonnement » ne s'affiche pas pour ce jeton.
 
 ### Gérer son abonnement (portail Stripe)
 
