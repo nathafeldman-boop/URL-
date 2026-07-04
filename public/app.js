@@ -807,9 +807,16 @@ function scoreLabel(v) {
   return v >= 80 ? "Excellent" : v >= 60 ? "Bon" : v >= 45 ? "Moyen" : "Faible";
 }
 
+/* Un novice lit une couleur plus vite qu'un chiffre : même échelle que
+   scoreLabel, appliquée à l'anneau, la valeur et les barres de force. */
+function scoreColor(v) {
+  return v >= 80 ? "var(--good)" : v >= 60 ? "var(--accent)" : v >= 45 ? "var(--warn)" : "var(--bad)";
+}
+
 function renderGauges(scores) {
   for (const el of document.querySelectorAll(".gauge")) {
     const val = scores[el.dataset.gauge] ?? 0;
+    const color = scoreColor(val);
     el.querySelectorAll("svg, .gauge-val").forEach((n) => n.remove());
 
     const main = el.classList.contains("gauge-main");
@@ -822,7 +829,7 @@ function renderGauges(scores) {
     svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
     svg.setAttribute("width", size);
     svg.setAttribute("height", size);
-    for (const [stroke, offset] of [["var(--border)", 0], ["var(--accent)", circ * (1 - val / 100)]]) {
+    for (const [stroke, offset] of [["var(--border)", 0], [color, circ * (1 - val / 100)]]) {
       const c = document.createElementNS(SVG_NS, "circle");
       c.setAttribute("cx", size / 2);
       c.setAttribute("cy", size / 2);
@@ -843,8 +850,10 @@ function renderGauges(scores) {
     valEl.className = "gauge-val";
     const num = document.createElement("b");
     num.textContent = val;
+    num.style.color = color;
     const lab = document.createElement("i");
     lab.textContent = scoreLabel(val);
+    lab.style.color = color;
     valEl.append(num, lab);
 
     el.prepend(svg, valEl);
@@ -876,6 +885,7 @@ function renderFunnel(steps) {
       bar.className = "meter";
       const fill = document.createElement("span");
       fill.style.width = s.force + "%";
+      fill.style.background = scoreColor(s.force);
       bar.append(fill);
       const detail = document.createElement("p");
       detail.textContent = s.detail;
