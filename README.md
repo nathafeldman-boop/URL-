@@ -80,7 +80,7 @@ public/
 
 ## Comptes (Supabase)
 
-Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses) vit dans un cookie signé et l'historique dans le navigateur (localStorage). Se connecter (Google, ou email → code à 6 chiffres sans mot de passe ni lien à cliquer) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
+Un compte n'est pas obligatoire : sans connexion, le quota gratuit (2 analyses, 1 comparaison) vit dans des cookies signés et l'historique dans le navigateur (localStorage). Se connecter (Google, ou email → code à 6 chiffres sans mot de passe ni lien à cliquer) rend le quota **nominatif** — en base, via des fonctions Postgres `security definer` (`quota_status`, `consume_analysis`, `refund_analysis`, `consume_comparison`, `refund_comparison`, `is_pro`, `apply_pro`) — et synchronise l'historique sur tous les appareils (table `analyses`, RLS : chacun ne voit que le sien).
 
 `public/auth.js` gère la session (stockage, rafraîchissement du jeton) et les appels REST directs à Supabase (zéro dépendance) : `requestOtp(email)` / `verifyOtp(email, code)` pour le code par email ; `signInWithGoogle()` / `consumeOAuthRedirect()` pour Google (redirection obligatoire — c'est le protocole OAuth, pas un email, donc pas le problème de lien pré-chargé qui affectait le lien magique). `public/app.js` route les appels vers le compte connecté en priorité, sinon le jeton Pro anonyme, sinon le cookie de quota.
 
@@ -106,6 +106,6 @@ Un bouton « Gérer mon abonnement » apparaît dans le tiroir historique dès q
 ## Limites connues (MVP)
 
 - Les sites rendus 100 % en JavaScript côté client renvoient peu de contenu : l'audit est refusé plutôt que d'inventer.
-- Gratuit sans compte : 2 analyses (compteur serveur via cookie signé) et 0 comparaison — effacer ses cookies remet le compteur à zéro. Gratuit avec compte : quota nominatif en base, ne se réinitialise pas en changeant de navigateur. Pro : illimité, activé par un jeton signé délivré après vérification du paiement auprès de Stripe (`/api/activate`), re-validé à chaque période ; si connecté, le statut Pro est aussi écrit sur le compte.
+- Gratuit sans compte : 2 analyses et 1 comparaison (compteurs serveur via cookies signés) — effacer ses cookies remet les compteurs à zéro. Gratuit avec compte : quota nominatif en base, ne se réinitialise pas en changeant de navigateur. Pro : illimité, activé par un jeton signé délivré après vérification du paiement auprès de Stripe (`/api/activate`), re-validé à chaque période ; si connecté, le statut Pro est aussi écrit sur le compte.
 - L'historique des analyses est en localStorage (20 dernières) hors connexion, synchronisé sur Supabase (20 dernières aussi) une fois connecté.
 - Rate limit basique en mémoire (30 requêtes/heure/IP sur `/api/analyze` et `/api/compare`) — protège des scripts naïfs, pas une vraie limite distribuée.

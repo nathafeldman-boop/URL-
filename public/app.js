@@ -30,11 +30,12 @@ let lastAnalysis = null;
 
 /* ------------------------------------------------------------------- pro
    Le jeton Pro (signé côté serveur après vérification Stripe) vit en
-   localStorage. Gratuit : 2 analyses (compteur serveur via cookie signé),
-   comparaison verrouillée. */
+   localStorage. Gratuit : 2 analyses et 1 comparaison (compteurs serveur
+   via cookies signés), puis Pro requis. */
 
 const PRO_KEY = "verdict_pro";
 const QUOTA_LEFT_KEY = "verdict_quota_restant";
+const COMPARE_LEFT_KEY = "verdict_comparaisons_restantes";
 
 /* Événement analytics Vercel (no-op si le script n'est pas chargé). */
 function track(name) {
@@ -99,12 +100,14 @@ paywall.addEventListener("click", (e) => {
   if (e.target === paywall) paywall.hidden = true;
 });
 document.getElementById("compare-unlock").addEventListener("click", () =>
-  openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.")
+  openPaywall("Tu as utilisé ta comparaison gratuite. Passe en Pro pour comparer en illimité avec ton site.")
 );
 
 /* État d'accès unifié : compte Supabase (quota nominatif en base) en
-   priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie. */
-let accessState = { mode: "cookie", pro: false, remaining: null, email: null, proUntil: null };
+   priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie.
+   compareRemaining : null = pas encore tenté (1 comparaison gratuite
+   supposée disponible), sinon le compte exact renvoyé par le serveur. */
+let accessState = { mode: "cookie", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null };
 
 async function refreshAccessState() {
   if (isLoggedIn()) {
@@ -114,25 +117,34 @@ async function refreshAccessState() {
         mode: "supabase",
         pro: !!q.pro,
         remaining: q.remaining,
+        compareRemaining: q.comparisons_remaining,
         email: getSbSession()?.user?.email || null,
         proUntil: q.pro_until || null,
       };
     } else {
       // Session invalide/expirée et non rafraîchissable.
-      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, email: null, proUntil: getProState()?.exp || null };
+      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null };
     }
   } else if (hasAnonymousProToken()) {
-    accessState = { mode: "token", pro: true, remaining: null, email: null, proUntil: getProState()?.exp || null };
+    accessState = { mode: "token", pro: true, remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null };
   } else {
     const raw = localStorage.getItem(QUOTA_LEFT_KEY);
-    accessState = { mode: "cookie", pro: false, remaining: raw === null ? null : Number(raw), email: null, proUntil: null };
+    const cmpRaw = localStorage.getItem(COMPARE_LEFT_KEY);
+    accessState = {
+      mode: "cookie",
+      pro: false,
+      remaining: raw === null ? null : Number(raw),
+      compareRemaining: cmpRaw === null ? null : Number(cmpRaw),
+      email: null,
+      proUntil: null,
+    };
   }
   renderAccessState();
   renderAccountUI();
 }
 
 function renderAccessState() {
-  const { pro, remaining } = accessState;
+  const { pro, remaining, compareRemaining } = accessState;
   document.getElementById("pro-badge").hidden = !pro;
 
   const note = document.getElementById("quota-note");
@@ -147,8 +159,15 @@ function renderAccessState() {
           : `Il te reste ${remaining} analyse${remaining > 1 ? "s" : ""} gratuite${remaining > 1 ? "s" : ""}. Résultats en ~40 secondes.`;
   }
 
-  document.getElementById("compare-form").hidden = !pro;
-  document.getElementById("compare-lock").hidden = pro;
+  const cmpLeft = compareRemaining === null ? 1 : compareRemaining;
+  const compareLocked = !pro && cmpLeft <= 0;
+  document.getElementById("compare-form").hidden = compareLocked;
+  document.getElementById("compare-lock").hidden = !compareLocked;
+  const compareNote = document.getElementById("compare-note");
+  compareNote.hidden = pro || compareLocked;
+  if (!pro && !compareLocked) {
+    compareNote.textContent = "1 comparaison gratuite avec ton site — la suivante nécessite le plan Pro.";
+  }
 }
 
 function renderAccountUI() {
@@ -568,10 +587,6 @@ compareForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const raw = compareInput.value.trim();
   if (!raw || !lastAnalysis) return;
-  if (!accessState.pro) {
-    openPaywall("La comparaison avec ton propre site et le plan d'action personnalisé sont réservés aux membres Pro.");
-    return;
-  }
 
   compareErrorEl.hidden = true;
   compareEl.hidden = true;
@@ -587,10 +602,18 @@ compareForm.addEventListener("submit", async (e) => {
     const data = await resp.json();
     if (!resp.ok) {
       if (data.code === "pro_requis") {
+        accessState.compareRemaining = 0;
+        if (accessState.mode === "cookie") localStorage.setItem(COMPARE_LEFT_KEY, "0");
+        renderAccessState();
         openPaywall(data.error);
         return;
       }
       throw new Error(data.error || "La comparaison a échoué. Réessaie.");
+    }
+    if (typeof data.comparaisons_restantes === "number") {
+      accessState.compareRemaining = data.comparaisons_restantes;
+      if (accessState.mode === "cookie") localStorage.setItem(COMPARE_LEFT_KEY, String(data.comparaisons_restantes));
+      renderAccessState();
     }
     renderCompare(data);
     track("comparaison_affichee");

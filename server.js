@@ -68,6 +68,16 @@ const server = http.createServer(async (req, res) => {
         const access = await checkCompareAccess(req);
         if (!access.allowed) return sendJson(res, access.error.status, access.error.body);
         const { status, body } = await compare(payload.url, payload.competitor);
+        if (status !== 200) {
+          if (access.refund) await access.refund();
+          return sendJson(res, status, body);
+        }
+        if (access.mode === "cookie" && !access.pro) {
+          res.setHeader("Set-Cookie", access.consume());
+          body.comparaisons_restantes = access.remaining;
+        } else if (access.mode === "supabase" && !access.pro) {
+          body.comparaisons_restantes = access.remaining;
+        }
         return sendJson(res, status, body);
       }
 

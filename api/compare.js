@@ -25,5 +25,15 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Corps de requête invalide." });
   }
   const { status, body } = await compare(payload.url, payload.competitor);
+  if (status !== 200) {
+    if (access.refund) await access.refund();
+    return res.status(status).json(body);
+  }
+  if (access.mode === "cookie" && !access.pro) {
+    res.setHeader("Set-Cookie", access.consume());
+    body.comparaisons_restantes = access.remaining;
+  } else if (access.mode === "supabase" && !access.pro) {
+    body.comparaisons_restantes = access.remaining;
+  }
   return res.status(status).json(body);
 };
