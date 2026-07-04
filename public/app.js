@@ -107,7 +107,7 @@ document.getElementById("compare-unlock").addEventListener("click", () =>
    priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie.
    compareRemaining : null = pas encore tenté (1 comparaison gratuite
    supposée disponible), sinon le compte exact renvoyé par le serveur. */
-let accessState = { mode: "cookie", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null };
+let accessState = { mode: "cookie", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null, hasStripeSubscription: false };
 
 async function refreshAccessState() {
   if (isLoggedIn()) {
@@ -120,13 +120,14 @@ async function refreshAccessState() {
         compareRemaining: q.comparisons_remaining,
         email: getSbSession()?.user?.email || null,
         proUntil: q.pro_until || null,
+        hasStripeSubscription: !!q.has_stripe_subscription,
       };
     } else {
       // Session invalide/expirée et non rafraîchissable.
-      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null };
+      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null, hasStripeSubscription: /^sub_/.test(getProState()?.sub || "") };
     }
   } else if (hasAnonymousProToken()) {
-    accessState = { mode: "token", pro: true, remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null };
+    accessState = { mode: "token", pro: true, remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null, hasStripeSubscription: /^sub_/.test(getProState()?.sub || "") };
   } else {
     const raw = localStorage.getItem(QUOTA_LEFT_KEY);
     const cmpRaw = localStorage.getItem(COMPARE_LEFT_KEY);
@@ -137,6 +138,7 @@ async function refreshAccessState() {
       compareRemaining: cmpRaw === null ? null : Number(cmpRaw),
       email: null,
       proUntil: null,
+      hasStripeSubscription: false,
     };
   }
   renderAccessState();
@@ -187,12 +189,11 @@ function renderAccountUI() {
     planEl.classList.toggle("is-pro", accessState.pro);
   }
 
-  // Accès au portail Stripe : visible dès qu'on est Pro, connecté ou non
-  // (un achat anonyme donne aussi droit à gérer son abonnement) — sauf pour
-  // le jeton propriétaire, qui n'a aucun abonnement Stripe à gérer.
-  const isOwnerToken = accessState.mode === "token" && getProState()?.sub === "owner-gratuit";
-  document.getElementById("billing-block").hidden = !accessState.pro || isOwnerToken;
-  if (accessState.pro && !isOwnerToken) {
+  // Accès au portail Stripe : visible dès qu'on est Pro avec un vrai
+  // abonnement Stripe derrière (achat anonyme ou compte) — pas pour un
+  // statut Pro accordé manuellement (jeton propriétaire, accès offert).
+  document.getElementById("billing-block").hidden = !accessState.pro || !accessState.hasStripeSubscription;
+  if (accessState.pro && accessState.hasStripeSubscription) {
     const renewal = document.getElementById("billing-renewal");
     renewal.textContent = accessState.proUntil
       ? "Renouvellement le " + new Date(accessState.proUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
