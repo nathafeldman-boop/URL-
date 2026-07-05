@@ -115,9 +115,10 @@ async function verifyOtp(email, code) {
    Google (et tout futur provider OAuth) : redirection obligatoire, il n'y a
    pas d'équivalent "code à taper" pour ce protocole. */
 
-/** Démarre la connexion Google — redirige vers Supabase qui gère l'échange OAuth. */
+/** Démarre la connexion Google — redirige vers Supabase qui gère l'échange OAuth,
+    puis revient sur la page d'où l'appel a été fait (/app, /dashboard.html…). */
 function signInWithGoogle() {
-  const redirect = encodeURIComponent(location.origin + "/app");
+  const redirect = encodeURIComponent(location.origin + location.pathname);
   location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirect}`;
 }
 
