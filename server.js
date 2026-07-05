@@ -15,7 +15,7 @@ const { createCheckout } = require("./lib/checkout");
 const { activate } = require("./lib/activate");
 const { issueOwnerToken } = require("./lib/owner");
 const { createPortalSession } = require("./lib/billing");
-const { checkAnalyzeAccess, checkCompareAccess, FREE_LIMIT, bearerToken } = require("./lib/access");
+const { checkAnalyzeAccess, checkCompareAccess, bearerToken } = require("./lib/access");
 const { rateLimit } = require("./lib/ratelimit");
 const { logEvent } = require("./lib/events");
 const { getDashboardData } = require("./lib/dashboard");
@@ -85,10 +85,7 @@ const server = http.createServer(async (req, res) => {
           if (access.refund) await access.refund();
           return sendJson(res, status, body);
         }
-        if (access.mode === "cookie" && !access.pro) {
-          res.setHeader("Set-Cookie", access.consume());
-          body.comparaisons_restantes = access.remaining;
-        } else if (access.mode === "supabase" && !access.pro) {
+        if (access.mode === "supabase" && !access.pro) {
           body.comparaisons_restantes = access.remaining;
         }
         logEvent("compare");
@@ -102,10 +99,7 @@ const server = http.createServer(async (req, res) => {
         if (access.refund) await access.refund();
         return sendJson(res, status, body);
       }
-      if (access.mode === "cookie" && !access.pro) {
-        res.setHeader("Set-Cookie", access.consume());
-        body.quota_restant = FREE_LIMIT - access.used - 1;
-      } else if (access.mode === "supabase" && !access.pro) {
+      if (access.mode === "supabase" && !access.pro) {
         body.quota_restant = access.remaining;
       }
       logEvent("analyze");

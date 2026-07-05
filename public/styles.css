@@ -1979,6 +1979,17 @@ body.report-view .bg-sky { opacity: 1; }
   line-height: 1.5;
 }
 
+.account-gate-note {
+  margin: -14px -20px 14px;
+  padding: 12px 20px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+}
+
 .account-row {
   display: flex;
   gap: 6px;

@@ -30,12 +30,10 @@ let lastAnalysis = null;
 
 /* ------------------------------------------------------------------- pro
    Le jeton Pro (signé côté serveur après vérification Stripe) vit en
-   localStorage. Gratuit : 2 analyses et 1 comparaison (compteurs serveur
-   via cookies signés), puis Pro requis. */
+   localStorage. Gratuit : 2 analyses et 1 comparaison, quota nominatif en
+   base — réservé aux comptes créés (voir openAccountGate plus bas). */
 
 const PRO_KEY = "verdict_pro";
-const QUOTA_LEFT_KEY = "verdict_quota_restant";
-const COMPARE_LEFT_KEY = "verdict_comparaisons_restantes";
 
 /* Événement analytics Vercel (no-op si le script n'est pas chargé). */
 function track(name) {
@@ -104,10 +102,11 @@ document.getElementById("compare-unlock").addEventListener("click", () =>
 );
 
 /* État d'accès unifié : compte Supabase (quota nominatif en base) en
-   priorité, sinon jeton Pro anonyme, sinon quota gratuit par cookie.
+   priorité, sinon jeton Pro anonyme, sinon "anonymous" (ni compte ni jeton
+   Pro — l'essai gratuit nécessite désormais un compte, voir openAccountGate).
    compareRemaining : null = pas encore tenté (1 comparaison gratuite
    supposée disponible), sinon le compte exact renvoyé par le serveur. */
-let accessState = { mode: "cookie", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null, hasStripeSubscription: false };
+let accessState = { mode: "anonymous", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null, hasStripeSubscription: false };
 
 async function refreshAccessState() {
   if (isLoggedIn()) {
@@ -124,34 +123,26 @@ async function refreshAccessState() {
       };
     } else {
       // Session invalide/expirée et non rafraîchissable.
-      accessState = { mode: "cookie", pro: hasAnonymousProToken(), remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null, hasStripeSubscription: /^sub_/.test(getProState()?.sub || "") };
+      accessState = { mode: "anonymous", pro: hasAnonymousProToken(), remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null, hasStripeSubscription: /^sub_/.test(getProState()?.sub || "") };
     }
   } else if (hasAnonymousProToken()) {
     accessState = { mode: "token", pro: true, remaining: null, compareRemaining: null, email: null, proUntil: getProState()?.exp || null, hasStripeSubscription: /^sub_/.test(getProState()?.sub || "") };
   } else {
-    const raw = localStorage.getItem(QUOTA_LEFT_KEY);
-    const cmpRaw = localStorage.getItem(COMPARE_LEFT_KEY);
-    accessState = {
-      mode: "cookie",
-      pro: false,
-      remaining: raw === null ? null : Number(raw),
-      compareRemaining: cmpRaw === null ? null : Number(cmpRaw),
-      email: null,
-      proUntil: null,
-      hasStripeSubscription: false,
-    };
+    accessState = { mode: "anonymous", pro: false, remaining: null, compareRemaining: null, email: null, proUntil: null, hasStripeSubscription: false };
   }
   renderAccessState();
   renderAccountUI();
 }
 
 function renderAccessState() {
-  const { pro, remaining, compareRemaining } = accessState;
+  const { pro, remaining, compareRemaining, mode } = accessState;
   document.getElementById("pro-badge").hidden = !pro;
 
   const note = document.getElementById("quota-note");
   if (pro) {
     note.textContent = "Analyses illimitées avec ton plan Pro. Résultats en ~40 secondes.";
+  } else if (mode === "anonymous") {
+    note.textContent = "Crée un compte gratuit pour 2 analyses offertes. Résultats en ~40 secondes.";
   } else {
     note.textContent =
       remaining === null
@@ -162,13 +153,64 @@ function renderAccessState() {
   }
 
   const cmpLeft = compareRemaining === null ? 1 : compareRemaining;
-  const compareLocked = !pro && cmpLeft <= 0;
+  const compareLocked = !pro && mode !== "anonymous" && cmpLeft <= 0;
   document.getElementById("compare-form").hidden = compareLocked;
   document.getElementById("compare-lock").hidden = !compareLocked;
   const compareNote = document.getElementById("compare-note");
-  compareNote.hidden = pro || compareLocked;
-  if (!pro && !compareLocked) {
+  compareNote.hidden = pro || compareLocked || mode === "anonymous";
+  if (!pro && !compareLocked && mode !== "anonymous") {
     compareNote.textContent = "1 comparaison gratuite avec ton site — la suivante nécessite le plan Pro.";
+  }
+}
+
+/* --------------------------------------------------------- compte requis
+   Depuis l'ajout du compte obligatoire pour l'essai gratuit, une tentative
+   d'analyse/comparaison sans compte ni jeton Pro ouvre ce panneau plutôt que
+   le paywall Pro. L'action est mémorisée (sessionStorage, survit à la
+   redirection Google OAuth) pour être rejouée automatiquement après connexion. */
+
+const PENDING_ACTION_KEY = "verdict_pending_action";
+
+function setPendingAction(action) {
+  try {
+    sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(action));
+  } catch {
+    /* sessionStorage indisponible : l'utilisateur devra relancer manuellement */
+  }
+}
+
+function takePendingAction() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_ACTION_KEY);
+    sessionStorage.removeItem(PENDING_ACTION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function openAccountGate(message, action) {
+  setPendingAction(action);
+  const note = document.getElementById("account-gate-note");
+  note.textContent = message;
+  note.hidden = false;
+  openDrawer();
+  track("compte_requis_affiche");
+}
+
+/* Rejoue l'analyse/comparaison mise en attente juste après une connexion
+   réussie — l'utilisateur n'a pas à ressaisir son URL. */
+async function resumePendingAction() {
+  const action = takePendingAction();
+  if (!action || !isLoggedIn()) return;
+  document.getElementById("account-gate-note").hidden = true;
+  closeDrawer();
+  if (action.type === "analyze") {
+    input.value = action.url;
+    form.requestSubmit();
+  } else if (action.type === "compare" && lastAnalysis) {
+    compareInput.value = action.url;
+    compareForm.requestSubmit();
   }
 }
 
@@ -271,6 +313,7 @@ function renderAccountUI() {
   }
 
   await refreshAccessState();
+  await resumePendingAction();
 })();
 
 /* ------------------------------------------------------------ onboarding
@@ -324,9 +367,12 @@ form.addEventListener("submit", async (e) => {
     });
     const data = await resp.json();
     if (!resp.ok) {
+      if (data.code === "compte_requis") {
+        openAccountGate(data.error, { type: "analyze", url: raw });
+        return;
+      }
       if (data.code === "quota_epuise") {
         accessState.remaining = 0;
-        if (accessState.mode === "cookie") localStorage.setItem(QUOTA_LEFT_KEY, "0");
         renderAccessState();
         openPaywall(data.error);
         return;
@@ -335,7 +381,6 @@ form.addEventListener("submit", async (e) => {
     }
     if (typeof data.quota_restant === "number") {
       accessState.remaining = data.quota_restant;
-      if (accessState.mode === "cookie") localStorage.setItem(QUOTA_LEFT_KEY, String(data.quota_restant));
       renderAccessState();
     }
     if (accessState.mode === "supabase") {
@@ -480,6 +525,10 @@ function closeDrawer() {
   drawer.classList.remove("open");
   drawerOverlay.hidden = true;
   historyToggle.setAttribute("aria-expanded", "false");
+  // Fermer sans s'être connecté = renoncer à l'action en attente (l'utilisateur
+  // devra relancer manuellement) plutôt que de rejouer une action obsolète plus tard.
+  document.getElementById("account-gate-note").hidden = true;
+  sessionStorage.removeItem(PENDING_ACTION_KEY);
 }
 
 historyToggle.addEventListener("click", () => {
@@ -554,6 +603,7 @@ codeForm.addEventListener("submit", async (e) => {
     signinForm.reset();
     await refreshAccessState();
     renderHistory();
+    await resumePendingAction();
   } catch (err) {
     codeMsg.hidden = false;
     codeMsg.className = "account-msg is-error";
@@ -623,9 +673,12 @@ compareForm.addEventListener("submit", async (e) => {
     });
     const data = await resp.json();
     if (!resp.ok) {
+      if (data.code === "compte_requis") {
+        openAccountGate(data.error, { type: "compare", url: raw });
+        return;
+      }
       if (data.code === "pro_requis") {
         accessState.compareRemaining = 0;
-        if (accessState.mode === "cookie") localStorage.setItem(COMPARE_LEFT_KEY, "0");
         renderAccessState();
         openPaywall(data.error);
         return;
@@ -634,7 +687,6 @@ compareForm.addEventListener("submit", async (e) => {
     }
     if (typeof data.comparaisons_restantes === "number") {
       accessState.compareRemaining = data.comparaisons_restantes;
-      if (accessState.mode === "cookie") localStorage.setItem(COMPARE_LEFT_KEY, String(data.comparaisons_restantes));
       renderAccessState();
     }
     renderCompare(data);

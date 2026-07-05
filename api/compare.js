@@ -1,6 +1,6 @@
 /* Fonction serverless Vercel : POST /api/compare
-   Compare le site de l'utilisateur au concurrent déjà analysé. Pro uniquement
-   (jeton Pro anonyme ou compte Supabase avec abonnement actif). */
+   Compare le site de l'utilisateur au concurrent déjà analysé. Nécessite un
+   compte (1 comparaison gratuite puis Pro) ou un jeton Pro anonyme. */
 
 const { compare } = require("../lib/audit");
 const { checkCompareAccess } = require("../lib/access");
@@ -30,10 +30,7 @@ module.exports = async (req, res) => {
     if (access.refund) await access.refund();
     return res.status(status).json(body);
   }
-  if (access.mode === "cookie" && !access.pro) {
-    res.setHeader("Set-Cookie", access.consume());
-    body.comparaisons_restantes = access.remaining;
-  } else if (access.mode === "supabase" && !access.pro) {
+  if (access.mode === "supabase" && !access.pro) {
     body.comparaisons_restantes = access.remaining;
   }
   logEvent("compare");

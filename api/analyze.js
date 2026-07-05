@@ -1,9 +1,9 @@
 /* Fonction serverless Vercel : POST /api/analyze
    Accès, dans l'ordre : jeton Pro anonyme → illimité ; session Supabase →
-   quota nominatif en base ; sinon → 2 analyses gratuites (cookie signé). */
+   2 analyses gratuites puis quota nominatif en base ; sinon → compte requis. */
 
 const { analyze } = require("../lib/audit");
-const { checkAnalyzeAccess, FREE_LIMIT } = require("../lib/access");
+const { checkAnalyzeAccess } = require("../lib/access");
 const { rateLimit } = require("../lib/ratelimit");
 const { logEvent } = require("../lib/events");
 
@@ -35,10 +35,7 @@ module.exports = async (req, res) => {
     return res.status(status).json(body);
   }
 
-  if (access.mode === "cookie" && !access.pro) {
-    res.setHeader("Set-Cookie", access.consume());
-    body.quota_restant = FREE_LIMIT - access.used - 1;
-  } else if (access.mode === "supabase" && !access.pro) {
+  if (access.mode === "supabase" && !access.pro) {
     body.quota_restant = access.remaining;
   }
   logEvent("analyze");
