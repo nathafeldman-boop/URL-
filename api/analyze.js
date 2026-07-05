@@ -5,6 +5,7 @@
 const { analyze } = require("../lib/audit");
 const { checkAnalyzeAccess, FREE_LIMIT } = require("../lib/access");
 const { rateLimit } = require("../lib/ratelimit");
+const { logEvent } = require("../lib/events");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -40,5 +41,6 @@ module.exports = async (req, res) => {
   } else if (access.mode === "supabase" && !access.pro) {
     body.quota_restant = access.remaining;
   }
+  logEvent("analyze");
   return res.status(status).json(body);
 };

@@ -5,6 +5,7 @@
 const { compare } = require("../lib/audit");
 const { checkCompareAccess } = require("../lib/access");
 const { rateLimit } = require("../lib/ratelimit");
+const { logEvent } = require("../lib/events");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -35,5 +36,6 @@ module.exports = async (req, res) => {
   } else if (access.mode === "supabase" && !access.pro) {
     body.comparaisons_restantes = access.remaining;
   }
+  logEvent("compare");
   return res.status(status).json(body);
 };

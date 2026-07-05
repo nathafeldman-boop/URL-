@@ -17,6 +17,8 @@ const { issueOwnerToken } = require("./lib/owner");
 const { createPortalSession } = require("./lib/billing");
 const { checkAnalyzeAccess, checkCompareAccess, FREE_LIMIT, bearerToken } = require("./lib/access");
 const { rateLimit } = require("./lib/ratelimit");
+const { logEvent } = require("./lib/events");
+const { getDashboardData } = require("./lib/dashboard");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -49,6 +51,10 @@ const server = http.createServer(async (req, res) => {
       const { status, body } = await createPortalSession(bearerToken(req), `http://localhost:${PORT}/app`);
       return sendJson(res, status, body);
     }
+    if (req.method === "GET" && req.url === "/api/dashboard-data") {
+      const { status, body } = await getDashboardData(bearerToken(req));
+      return sendJson(res, status, body);
+    }
     if (req.method === "POST" && (req.url === "/api/analyze" || req.url === "/api/compare" || req.url === "/api/activate" || req.url === "/api/owner-token")) {
       let payload;
       try {
@@ -59,6 +65,7 @@ const server = http.createServer(async (req, res) => {
 
       if (req.url === "/api/activate") {
         const { status, body } = await activate(payload, bearerToken(req));
+        if (status === 200) logEvent("pro_activated");
         return sendJson(res, status, body);
       }
 
@@ -84,6 +91,7 @@ const server = http.createServer(async (req, res) => {
         } else if (access.mode === "supabase" && !access.pro) {
           body.comparaisons_restantes = access.remaining;
         }
+        logEvent("compare");
         return sendJson(res, status, body);
       }
 
@@ -100,12 +108,14 @@ const server = http.createServer(async (req, res) => {
       } else if (access.mode === "supabase" && !access.pro) {
         body.quota_restant = access.remaining;
       }
+      logEvent("analyze");
       return sendJson(res, status, body);
     }
     if (req.method === "GET" && req.url.split("?")[0] === "/api/checkout") {
       const plan = new URL(req.url, "http://x").searchParams.get("plan") || "mensuel";
       const { status, redirectUrl, body } = await createCheckout(`http://localhost:${PORT}`, plan);
       if (redirectUrl) {
+        logEvent("checkout_click", { plan });
         res.writeHead(status, { Location: redirectUrl });
         return res.end();
       }
