@@ -1135,8 +1135,8 @@ body.report-view .bg-sky { opacity: 1; }
 
 .chapter-zone {
   width: 100vw;
-  margin-left: 50%;
-  transform: translateX(-50%);
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 
 .chapter-dark {
