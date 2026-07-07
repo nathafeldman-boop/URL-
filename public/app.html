@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
@@ -226,16 +226,30 @@
 
     <!-- =================================================== Analysis mode -->
     <div class="analysis" id="loading" hidden aria-live="polite">
+      <div class="analysis-scan" aria-hidden="true"></div>
       <div class="analysis-inner">
         <p class="loading-domain" id="loading-domain"></p>
+
+        <div class="loading-counter">
+          <b id="loading-counter-val">0</b>
+          <span>signaux de conversion croisés</span>
+        </div>
+
         <p class="loading-step" id="loading-step">Analyse de la structure…</p>
         <div class="analysis-bar"><span id="analysis-progress"></span></div>
+
         <ul class="analysis-checks" id="analysis-checks">
           <li>Structure</li>
           <li>Copywriting</li>
           <li>UX</li>
+          <li>Confiance</li>
           <li>Stratégie</li>
         </ul>
+
+        <div class="loading-ticker" aria-hidden="true">
+          <div class="loading-ticker-track" id="loading-ticker-track"></div>
+          <div class="loading-ticker-fade"></div>
+        </div>
       </div>
     </div>
 
@@ -291,68 +305,75 @@
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="card">
-          <h3 class="card-title">Funnel de conversion</h3>
-          <p class="card-sub">La solidité de chaque étape du parcours visiteur.</p>
-          <div class="funnel" id="r-funnel"></div>
-        </div>
-        <div class="card">
-          <h3 class="card-title">Mots-clés dominants</h3>
-          <p class="card-sub">Les mots les plus répétés sur la page — son territoire sémantique.</p>
-          <div class="kw-list" id="r-keywords"></div>
-        </div>
-      </div>
+      <div class="chapter-zone chapter-dark">
+        <div class="chapter-mark"><span>Analyse approfondie</span></div>
+        <div class="chapter-inner">
 
-      <div class="two-col">
-        <div class="card">
-          <h3 class="card-title">D'où vient le trafic</h3>
-          <div class="chips" id="r-sources"></div>
-          <p class="fact-text" id="r-trafic"></p>
-        </div>
-        <div class="card">
-          <h3 class="card-title">Technique</h3>
-          <p class="card-sub">Détecté dans le code de la page.</p>
-          <div class="chips" id="r-tech"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">Stratégie globale</h3>
-        <p class="card-sub">Comment ce business attire, convertit et fidélise.</p>
-        <div class="fact-grid">
-          <div class="fact">
-            <span class="card-label">Stratégie</span>
-            <p id="r-strategie"></p>
+          <div class="two-col">
+            <div class="card">
+              <h3 class="card-title">Funnel de conversion</h3>
+              <p class="card-sub">La solidité de chaque étape du parcours visiteur.</p>
+              <div class="funnel" id="r-funnel"></div>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Mots-clés dominants</h3>
+              <p class="card-sub">Les mots les plus répétés sur la page — son territoire sémantique.</p>
+              <div class="kw-list" id="r-keywords"></div>
+            </div>
           </div>
-          <div class="fact">
-            <span class="card-label">Positionnement</span>
-            <p id="r-positionnement"></p>
+
+          <div class="two-col">
+            <div class="card">
+              <h3 class="card-title">D'où vient le trafic</h3>
+              <div class="chips" id="r-sources"></div>
+              <p class="fact-text" id="r-trafic"></p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Technique</h3>
+              <p class="card-sub">Détecté dans le code de la page.</p>
+              <div class="chips" id="r-tech"></div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div class="card">
-        <h3 class="card-title">Analyse du site</h3>
-        <p class="card-sub">Ce que la page fait, élément par élément.</p>
-        <div class="fact-grid two" id="r-site">
-          <div class="fact"><span class="card-label">Proposition de valeur</span><p data-site="proposition_valeur"></p></div>
-          <div class="fact"><span class="card-label">Structure</span><p data-site="structure"></p></div>
-          <div class="fact"><span class="card-label">UX</span><p data-site="ux"></p></div>
-          <div class="fact"><span class="card-label">Copywriting</span><p data-site="copywriting"></p></div>
-          <div class="fact"><span class="card-label">Éléments de confiance</span><p data-site="confiance"></p></div>
-          <div class="fact"><span class="card-label">CTA</span><p data-site="cta"></p></div>
-        </div>
-      </div>
+          <div class="card">
+            <h3 class="card-title">Stratégie globale</h3>
+            <p class="card-sub">Comment ce business attire, convertit et fidélise.</p>
+            <div class="fact-grid">
+              <div class="fact">
+                <span class="card-label">Stratégie</span>
+                <p id="r-strategie"></p>
+              </div>
+              <div class="fact">
+                <span class="card-label">Positionnement</span>
+                <p id="r-positionnement"></p>
+              </div>
+            </div>
+          </div>
 
-      <div class="card" id="r-ecom-card" hidden>
-        <h3 class="card-title">Analyse e-commerce</h3>
-        <p class="card-sub">Offre, prix et mécaniques de panier.</p>
-        <div class="fact-grid">
-          <div class="fact"><span class="card-label">Offre</span><p data-ecom="offre"></p></div>
-          <div class="fact"><span class="card-label">Pricing</span><p data-ecom="pricing"></p></div>
-          <div class="fact"><span class="card-label">Upsells &amp; panier moyen</span><p data-ecom="upsells"></p></div>
-          <div class="fact"><span class="card-label">Friction à l'achat</span><p data-ecom="friction_achat"></p></div>
+          <div class="card">
+            <h3 class="card-title">Analyse du site</h3>
+            <p class="card-sub">Ce que la page fait, élément par élément.</p>
+            <div class="fact-grid two" id="r-site">
+              <div class="fact"><span class="card-label">Proposition de valeur</span><p data-site="proposition_valeur"></p></div>
+              <div class="fact"><span class="card-label">Structure</span><p data-site="structure"></p></div>
+              <div class="fact"><span class="card-label">UX</span><p data-site="ux"></p></div>
+              <div class="fact"><span class="card-label">Copywriting</span><p data-site="copywriting"></p></div>
+              <div class="fact"><span class="card-label">Éléments de confiance</span><p data-site="confiance"></p></div>
+              <div class="fact"><span class="card-label">CTA</span><p data-site="cta"></p></div>
+            </div>
+          </div>
+
+          <div class="card" id="r-ecom-card" hidden>
+            <h3 class="card-title">Analyse e-commerce</h3>
+            <p class="card-sub">Offre, prix et mécaniques de panier.</p>
+            <div class="fact-grid">
+              <div class="fact"><span class="card-label">Offre</span><p data-ecom="offre"></p></div>
+              <div class="fact"><span class="card-label">Pricing</span><p data-ecom="pricing"></p></div>
+              <div class="fact"><span class="card-label">Upsells &amp; panier moyen</span><p data-ecom="upsells"></p></div>
+              <div class="fact"><span class="card-label">Friction à l'achat</span><p data-ecom="friction_achat"></p></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -422,10 +443,15 @@
         </div>
       </div>
 
-      <div class="card">
-        <h3 class="card-title">Ce qu'il faut changer</h3>
-        <p class="card-sub">Cinq écarts classés par impact sur les ventes.</p>
-        <div class="gaps" id="c-ecarts"></div>
+      <div class="chapter-zone chapter-dark">
+        <div class="chapter-mark"><span>Analyse approfondie</span></div>
+        <div class="chapter-inner">
+          <div class="card">
+            <h3 class="card-title">Ce qu'il faut changer</h3>
+            <p class="card-sub">Cinq écarts classés par impact sur les ventes.</p>
+            <div class="gaps" id="c-ecarts"></div>
+          </div>
+        </div>
       </div>
 
       <div class="card">

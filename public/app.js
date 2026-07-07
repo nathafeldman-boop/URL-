@@ -13,6 +13,7 @@ const LOADING_STEPS = [
   "Analyse de la structure…",
   "Analyse du copywriting…",
   "Analyse UX…",
+  "Vérification des signaux de confiance…",
   "Détection de stratégie…",
 ];
 
@@ -20,11 +21,32 @@ const COMPARE_STEPS = [
   "Analyse de ton site…",
   "Comparaison des propositions de valeur…",
   "Comparaison des tunnels de conversion…",
+  "Vérification des signaux de confiance…",
   "Rédaction de tes priorités…",
+];
+
+/* Défile pendant le chargement pour vendre la profondeur du calcul —
+   purement cosmétique, aucune de ces phrases ne reflète un vrai compteur. */
+const TICKER_PHRASES = [
+  "Analyse de plus de 3 ans de tendances de conversion…",
+  "Comparaison avec 40 000+ pages à forte conversion…",
+  "Repérage des schémas de copywriting qui marchent…",
+  "Calcul des signaux de confiance…",
+  "Détection des leviers de croissance…",
+  "Croisement avec les benchmarks du secteur…",
+  "Analyse du parcours visiteur, étape par étape…",
+  "Décomposition de la structure de la page…",
+  "Évaluation de la lisibilité et du ton…",
+  "Identification des mots-clés dominants…",
 ];
 
 let stepTimer = null;
 let progressTimer = null;
+let counterTimer = null;
+let counterVal = 0;
+let counterTarget = 0;
+let tickerTimer = null;
+let tickerIdx = 0;
 // Dernière analyse concurrent, réutilisée par la comparaison.
 let lastAnalysis = null;
 
@@ -761,6 +783,49 @@ function renderCompare({ url, competitorUrl, comparison }) {
   compareEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* Gros compteur qui s'emballe pendant le chargement — approche une cible
+   au hasard (30-55k) sans jamais l'atteindre, comme la barre de progression,
+   pour vendre le volume de données croisées plutôt qu'une vraie mesure. */
+function startCounter() {
+  const el = document.getElementById("loading-counter-val");
+  counterVal = 0;
+  counterTarget = 30000 + Math.floor(Math.random() * 25000);
+  el.textContent = "0";
+  counterTimer = setInterval(() => {
+    counterVal += (counterTarget - counterVal) * 0.045 + Math.random() * 30;
+    el.textContent = Math.floor(counterVal).toLocaleString("fr-FR");
+  }, 120);
+}
+
+function stopCounter() {
+  clearInterval(counterTimer);
+  const el = document.getElementById("loading-counter-val");
+  const final = counterTarget + Math.floor(Math.random() * 4000);
+  el.textContent = final.toLocaleString("fr-FR");
+}
+
+/* Fil de phrases qui défile en continu (indépendant des vraies étapes)
+   pour donner une impression de calcul dense pendant toute l'attente. */
+function startTicker() {
+  const track = document.getElementById("loading-ticker-track");
+  track.innerHTML = "";
+  tickerIdx = 0;
+  const pushLine = () => {
+    const line = document.createElement("div");
+    line.className = "ticker-line";
+    line.textContent = TICKER_PHRASES[tickerIdx % TICKER_PHRASES.length];
+    tickerIdx++;
+    track.appendChild(line);
+    while (track.children.length > 4) track.removeChild(track.firstChild);
+  };
+  pushLine();
+  tickerTimer = setInterval(pushLine, 1500);
+}
+
+function stopTicker() {
+  clearInterval(tickerTimer);
+}
+
 function startLoading(url, steps = LOADING_STEPS) {
   btn.disabled = true;
   loadingDomain.textContent = url.replace(/^https?:\/\//, "").split("/")[0];
@@ -777,7 +842,7 @@ function startLoading(url, steps = LOADING_STEPS) {
     if (i < checks.length) checks[i].classList.add("done");
     i = Math.min(i + 1, steps.length - 1);
     loadingStep.textContent = steps[i];
-  }, 8000);
+  }, 6400);
 
   // La barre approche 90 % sans jamais l'atteindre — complétée à la réponse.
   let p = 4;
@@ -785,12 +850,18 @@ function startLoading(url, steps = LOADING_STEPS) {
     p += (90 - p) * 0.06;
     bar.style.width = p.toFixed(1) + "%";
   }, 600);
+
+  startCounter();
+  startTicker();
 }
 
 function stopLoading() {
   clearInterval(stepTimer);
   clearInterval(progressTimer);
   document.getElementById("analysis-progress").style.width = "100%";
+  document.querySelectorAll("#analysis-checks li").forEach((c) => c.classList.add("done"));
+  stopCounter();
+  stopTicker();
   setTimeout(() => (loadingEl.hidden = true), 250);
   btn.disabled = false;
 }
