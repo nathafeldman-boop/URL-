@@ -222,15 +222,24 @@ body {
   text-align: center;
 }
 
-.hero-eyebrow {
-  display: inline-block;
+.hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 28px;
+  max-width: 640px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-soft);
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
-  margin-bottom: 20px;
 }
 
 .hero-title {
@@ -345,11 +354,12 @@ body {
   margin: 0 auto;
 }
 
-.hero-video .hero-eyebrow {
+.hero-video .hero-chip {
   color: #fff;
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .hero-video .hero-title {
