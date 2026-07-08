@@ -122,6 +122,9 @@ paywall.addEventListener("click", (e) => {
 document.getElementById("compare-unlock").addEventListener("click", () =>
   openPaywall("Tu as utilisé ta comparaison gratuite. Passe en Pro pour comparer en illimité avec ton site.")
 );
+document.getElementById("ads-center-unlock").addEventListener("click", () =>
+  openPaywall("Le Centre publicitaire (bibliothèques Meta et TikTok, angles inexploités) est réservé aux membres Pro.")
+);
 
 /* État d'accès unifié : compte Supabase (quota nominatif en base) en
    priorité, sinon jeton Pro anonyme, sinon "anonymous" (ni compte ni jeton
@@ -871,7 +874,7 @@ function setError(msg) {
   errorEl.textContent = msg || "";
 }
 
-function renderReport({ url, technologies, metrics, report }) {
+function renderReport({ url, technologies, metrics, report, ads }) {
   const r = report;
   lastAnalysis = { url, report };
   document.getElementById("app-visual").hidden = true;
@@ -917,6 +920,8 @@ function renderReport({ url, technologies, metrics, report }) {
 
   fillList("r-forts", r.points_forts);
   fillList("r-faibles", r.points_faibles);
+
+  renderAdsCenter(url, ads, r);
 
   reportEl.hidden = false;
   reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1063,5 +1068,43 @@ function fillList(id, items) {
       return li;
     })
   );
+}
+
+/* ------------------------------------------------------ centre publicitaire
+   Le back-end fournit déjà `ads` (meilleure estimation de marque possible :
+   JSON-LD, og:site_name, <title>) sur une analyse fraîche. Pour une entrée
+   d'historique plus ancienne (avant l'ajout de cette fonctionnalité, donc
+   sans `ads` stocké), on retombe sur un nom dérivé du domaine — moins
+   précis mais toujours utilisable en un clic. */
+function domainToNameFallback(url) {
+  try {
+    const base = new URL(url).hostname.replace(/^www\./, "").split(".")[0];
+    return base.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  } catch {
+    return "";
+  }
+}
+
+function buildAdLinksFallback(url) {
+  const brand = domainToNameFallback(url);
+  const q = encodeURIComponent(brand);
+  return {
+    brand,
+    meta_url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&media_type=all&q=${q}`,
+    tiktok_url: `https://library.tiktok.com/ads?region=all&query_type=1&adv_name=${q}`,
+  };
+}
+
+function renderAdsCenter(url, ads, r) {
+  const links = ads || buildAdLinksFallback(url);
+  document.getElementById("ads-meta-link").href = links.meta_url;
+  document.getElementById("ads-tiktok-link").href = links.tiktok_url;
+  fillChips("r-pub-angles", r.pub_angles);
+  fillList("r-pub-opportunites", r.pub_opportunites);
+
+  const unlocked = accessState.pro;
+  document.getElementById("ads-center-body").hidden = !unlocked;
+  document.getElementById("ads-opportunities").hidden = !unlocked;
+  document.getElementById("ads-center-lock").hidden = unlocked;
 }
 
