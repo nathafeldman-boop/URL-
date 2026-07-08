@@ -89,12 +89,29 @@ async function authHeaders() {
   return proHeaders();
 }
 
+/* Lit une réponse API en tolérant un corps non-JSON : quand une fonction
+   dépasse ses 60s, Vercel la tue et répond en texte brut ("An error
+   occurred…") — resp.json() jetait alors "Unexpected token 'A'…" tel quel
+   à l'écran. Ici, ça devient un message d'erreur humain. */
+async function readJson(resp) {
+  const text = await resp.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: resp.status === 504 || /timed?\s?out|error occurred/i.test(text)
+        ? "L'analyse a pris trop de temps — le site est peut-être lent à répondre. Réessaie dans un instant."
+        : "Le serveur a renvoyé une réponse inattendue. Réessaie dans un instant.",
+    };
+  }
+}
+
 async function activatePro(payload) {
   const headers = { "Content-Type": "application/json" };
   const loggedIn = isLoggedIn();
   if (loggedIn) Object.assign(headers, await sbAuthHeaders());
   const resp = await fetch("/api/activate", { method: "POST", headers, body: JSON.stringify(payload) });
-  const data = await resp.json();
+  const data = await readJson(resp);
   if (!resp.ok) throw new Error(data.error || "Activation impossible. Réessaie ou contacte-nous.");
   // Le jeton anonyme n'est conservé que hors connexion : pour un compte, le
   // statut Pro vit en base (apply_pro) — le garder ici survivrait à la
@@ -301,7 +318,7 @@ function renderAccountUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ secret: ownerSecret }),
       });
-      const data = await resp.json();
+      const data = await readJson(resp);
       if (!resp.ok) throw new Error(data.error || "Jeton invalide.");
       localStorage.setItem(PRO_KEY, JSON.stringify(data));
     } catch (err) {
@@ -390,7 +407,7 @@ form.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw }),
     });
-    const data = await resp.json();
+    const data = await readJson(resp);
     if (!resp.ok) {
       if (data.code === "compte_requis") {
         openAccountGate(data.error, { type: "analyze", url: raw });
@@ -662,7 +679,7 @@ document.getElementById("billing-btn").addEventListener("click", async () => {
   btn.disabled = true;
   try {
     const resp = await fetch("/api/billing-portal", { method: "POST", headers: await authHeaders() });
-    const data = await resp.json();
+    const data = await readJson(resp);
     if (!resp.ok) throw new Error(data.error || "Impossible d'ouvrir ton espace abonnement. Réessaie dans un instant.");
     track("portail_stripe_ouvert");
     location.href = data.url;
@@ -696,7 +713,7 @@ compareForm.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw, competitor: { url: lastAnalysis.url, report: lastAnalysis.report } }),
     });
-    const data = await resp.json();
+    const data = await readJson(resp);
     if (!resp.ok) {
       if (data.code === "compte_requis") {
         openAccountGate(data.error, { type: "compare", url: raw });
