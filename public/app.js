@@ -900,7 +900,6 @@ function renderReport({ url, technologies, metrics, report, ads }) {
   document.getElementById("r-resume").textContent = r.resume;
   document.getElementById("r-pourquoi").textContent = r.strategie.pourquoi_ca_marche;
   document.getElementById("r-strategie").textContent = r.strategie.globale;
-  document.getElementById("r-positionnement").textContent = r.strategie.positionnement;
 
   fillChips("r-sources", r.trafic.sources);
   document.getElementById("r-trafic").textContent = r.trafic.analyse;
@@ -909,6 +908,14 @@ function renderReport({ url, technologies, metrics, report, ads }) {
   for (const el of document.querySelectorAll("#r-site [data-site]")) {
     el.textContent = r.analyse_site[el.dataset.site] || "—";
   }
+
+  renderModules("r-modules-strategie", [["Positionnement", r.strategie.positionnement]]);
+  renderModules("r-modules-site", [
+    ["Structure", r.analyse_site.structure],
+    ["UX", r.analyse_site.ux],
+    ["Copywriting", r.analyse_site.copywriting],
+    ["Conversion", r.analyse_site.cta],
+  ]);
 
   const ecomCard = document.getElementById("r-ecom-card");
   ecomCard.hidden = !r.ecommerce;
@@ -1056,6 +1063,74 @@ function fillChips(id, labels) {
       chip.textContent = label;
       return chip;
     })
+  );
+}
+
+/* ------------------------------------------------------------- modules
+   Chaque module (UX, Copywriting, Conversion, Structure, Positionnement)
+   sépare strictement observé / déduction / recommandation — jamais
+   mélangés (voir SYSTEM_PROMPT côté serveur). Repliés par défaut, un clic
+   sur l'en-tête déplie le détail. */
+function buildModule(name, data) {
+  const el = document.createElement("div");
+  el.className = "module";
+
+  const head = document.createElement("button");
+  head.type = "button";
+  head.className = "module-head";
+  head.setAttribute("aria-expanded", "false");
+  const label = document.createElement("span");
+  label.className = "module-name";
+  label.textContent = name;
+  const chevron = document.createElement("svg");
+  chevron.setAttribute("class", "module-chevron");
+  chevron.setAttribute("viewBox", "0 0 16 16");
+  chevron.setAttribute("width", "14");
+  chevron.setAttribute("height", "14");
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.innerHTML = '<path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  head.append(label, chevron);
+
+  const body = document.createElement("div");
+  body.className = "module-body";
+  body.hidden = true;
+  const tiers = [
+    ["observe", "Observé", data?.observe],
+    ["deduction", "Déduction", data?.deduction],
+    ["recommandation", "Recommandation", data?.recommandation],
+  ];
+  for (const [key, tierLabel, text] of tiers) {
+    if (!text) continue;
+    const tier = document.createElement("div");
+    tier.className = "module-tier module-tier-" + key;
+    const tierName = document.createElement("span");
+    tierName.className = "module-tier-label";
+    tierName.textContent = tierLabel;
+    const p = document.createElement("p");
+    p.textContent = text;
+    tier.append(tierName, p);
+    body.append(tier);
+  }
+  if (!body.children.length) {
+    const p = document.createElement("p");
+    p.className = "module-empty";
+    p.textContent = "—";
+    body.append(p);
+  }
+
+  head.addEventListener("click", () => {
+    const expanded = head.getAttribute("aria-expanded") === "true";
+    head.setAttribute("aria-expanded", String(!expanded));
+    body.hidden = expanded;
+  });
+
+  el.append(head, body);
+  return el;
+}
+
+function renderModules(containerId, entries) {
+  document.getElementById(containerId).replaceChildren(
+    ...entries.map(([name, data]) => buildModule(name, data))
   );
 }
 
