@@ -927,7 +927,7 @@ function renderReport({ url, technologies, metrics, report, ads }) {
   fillList("r-forts", r.points_forts);
   fillList("r-faibles", r.points_faibles);
 
-  renderAdsCenter(url, ads, r);
+  renderAdsCenter(url, ads, r, technologies);
 
   foldCards("report");
   reportEl.hidden = false;
@@ -1187,16 +1187,33 @@ function buildAdLinksFallback(url) {
   };
 }
 
-function renderAdsCenter(url, ads, r) {
+function renderAdsCenter(url, ads, r, technologies) {
   const links = ads || buildAdLinksFallback(url);
   document.getElementById("ads-meta-link").href = links.meta_url;
   document.getElementById("ads-tiktok-link").href = links.tiktok_url;
   fillChips("r-pub-angles", r.pub_angles);
   fillList("r-pub-opportunites", r.pub_opportunites);
 
+  /* Honnêteté avant tout : si aucun pixel publicitaire n'est détecté dans
+     le code du site, la bibliothèque a de bonnes chances d'être vide — on
+     le dit à l'avance plutôt que de laisser l'utilisateur croire à un bug.
+     (Un pixel détecté = il track ses conversions = il annonce très
+     probablement ; l'inverse n'est qu'un indice, d'où le conditionnel.) */
+  const tech = technologies || [];
+  setAdsHint("ads-meta-hint", tech.includes("Pixel Meta"), "Meta");
+  setAdsHint("ads-tiktok-hint", tech.includes("Pixel TikTok"), "TikTok");
+
   const unlocked = accessState.pro;
   document.getElementById("ads-center-body").hidden = !unlocked;
   document.getElementById("ads-opportunities").hidden = !unlocked;
   document.getElementById("ads-center-lock").hidden = unlocked;
+}
+
+function setAdsHint(id, pixelFound, platform) {
+  const el = document.getElementById(id);
+  el.classList.toggle("on", pixelFound);
+  el.textContent = pixelFound
+    ? `Pixel ${platform} détecté sur son site — il diffuse très probablement des publicités ${platform}.`
+    : `Aucun pixel ${platform} détecté sur son site : il se peut qu'il ne diffuse aucune publicité ${platform} en ce moment. Si la bibliothèque s'ouvre vide, c'est le signe qu'il n'annonce pas — ou sous un autre nom (essaie le domaine).`;
 }
 
