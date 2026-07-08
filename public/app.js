@@ -5,48 +5,38 @@ const input = document.getElementById("url-input");
 const btn = document.getElementById("analyze-btn");
 const errorEl = document.getElementById("form-error");
 const loadingEl = document.getElementById("loading");
-const loadingStep = document.getElementById("loading-step");
 const loadingDomain = document.getElementById("loading-domain");
 const reportEl = document.getElementById("report");
 
-const LOADING_STEPS = [
-  "Analyse de la structure…",
-  "Analyse du copywriting…",
-  "Analyse UX…",
-  "Vérification des signaux de confiance…",
-  "Détection de stratégie…",
+/* Journal de travail affiché pendant l'analyse : chaque ligne apparaît en
+   cours d'exécution puis se coche. Les libellés correspondent aux étapes
+   réelles du moteur (extraction, détection techno/CTA, liens publicitaires,
+   scoring LLM) — le rythme est simulé car l'API répond d'un bloc, mais rien
+   n'annonce un résultat qu'on n'a pas. */
+const ANALYZE_LOG = [
+  { run: "Chargement de la page…", done: "Page chargée", ms: 2600 },
+  { run: "Détection des technologies…", done: "Signatures techniques relevées", ms: 3800 },
+  { run: "Extraction de la structure (titres, sections)…", done: "Structure cartographiée", ms: 4200 },
+  { run: "Détection des CTA et des formulaires…", done: "CTA et formulaires relevés", ms: 4200 },
+  { run: "Analyse du copywriting…", done: "Proposition de valeur identifiée", ms: 5200 },
+  { run: "Mesure de la lisibilité et des mots-clés…", done: "Territoire sémantique mesuré", ms: 4600 },
+  { run: "Recherche des bibliothèques publicitaires…", done: "Meta Ads & TikTok Ads localisées", ms: 3800 },
+  { run: "Croisement avec les benchmarks du secteur…", done: "Benchmarks croisés", ms: 5600 },
+  { run: "Calcul des scores et du funnel…", done: "Analyse terminée", ms: Infinity },
 ];
 
-const COMPARE_STEPS = [
-  "Analyse de ton site…",
-  "Comparaison des propositions de valeur…",
-  "Comparaison des tunnels de conversion…",
-  "Vérification des signaux de confiance…",
-  "Rédaction de tes priorités…",
+const COMPARE_LOG = [
+  { run: "Chargement de ton site…", done: "Page chargée", ms: 3000 },
+  { run: "Extraction de ta structure et de tes CTA…", done: "Structure cartographiée", ms: 4600 },
+  { run: "Comparaison des propositions de valeur…", done: "Propositions de valeur comparées", ms: 5400 },
+  { run: "Comparaison des tunnels de conversion…", done: "Tunnels comparés", ms: 5400 },
+  { run: "Repérage de tes points d'avance…", done: "Points d'avance identifiés", ms: 5000 },
+  { run: "Rédaction de tes priorités…", done: "Analyse terminée", ms: Infinity },
 ];
 
-/* Défile pendant le chargement pour vendre la profondeur du calcul —
-   purement cosmétique, aucune de ces phrases ne reflète un vrai compteur. */
-const TICKER_PHRASES = [
-  "Analyse de plus de 3 ans de tendances de conversion…",
-  "Comparaison avec 40 000+ pages à forte conversion…",
-  "Repérage des schémas de copywriting qui marchent…",
-  "Calcul des signaux de confiance…",
-  "Détection des leviers de croissance…",
-  "Croisement avec les benchmarks du secteur…",
-  "Analyse du parcours visiteur, étape par étape…",
-  "Décomposition de la structure de la page…",
-  "Évaluation de la lisibilité et du ton…",
-  "Identification des mots-clés dominants…",
-];
-
-let stepTimer = null;
+let logTimer = null;
+let logEntries = [];
 let progressTimer = null;
-let counterTimer = null;
-let counterVal = 0;
-let counterTarget = 0;
-let tickerTimer = null;
-let tickerIdx = 0;
 // Dernière analyse concurrent, réutilisée par la comparaison.
 let lastAnalysis = null;
 
@@ -356,6 +346,15 @@ function renderAccountUI() {
 
   await refreshAccessState();
   await resumePendingAction();
+
+  // URL collée directement sur la landing (formulaire du hero → /app?u=…) :
+  // on préremplit et on lance sans clic supplémentaire.
+  const heroUrl = params.get("u");
+  if (heroUrl && !input.value) {
+    history.replaceState(null, "", "/app");
+    input.value = heroUrl;
+    form.requestSubmit();
+  }
 })();
 
 /* ------------------------------------------------------------ onboarding
@@ -705,7 +704,7 @@ compareForm.addEventListener("submit", async (e) => {
   compareErrorEl.hidden = true;
   compareEl.hidden = true;
   compareBtn.disabled = true;
-  startLoading(raw, COMPARE_STEPS);
+  startLoading(raw, COMPARE_LOG);
 
   try {
     const resp = await fetch("/api/compare", {
@@ -803,86 +802,68 @@ function renderCompare({ url, competitorUrl, comparison }) {
   compareEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* Gros compteur qui s'emballe pendant le chargement — approche une cible
-   au hasard (30-55k) sans jamais l'atteindre, comme la barre de progression,
-   pour vendre le volume de données croisées plutôt qu'une vraie mesure. */
-function startCounter() {
-  const el = document.getElementById("loading-counter-val");
-  counterVal = 0;
-  counterTarget = 30000 + Math.floor(Math.random() * 25000);
-  el.textContent = "0";
-  counterTimer = setInterval(() => {
-    counterVal += (counterTarget - counterVal) * 0.045 + Math.random() * 30;
-    el.textContent = Math.floor(counterVal).toLocaleString("fr-FR");
-  }, 120);
+function pushLogEntry(step) {
+  const track = document.getElementById("work-log");
+  const line = document.createElement("div");
+  line.className = "log-line";
+  const mark = document.createElement("span");
+  mark.className = "log-mark";
+  mark.innerHTML = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 6.5 5 9l4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const text = document.createElement("span");
+  text.className = "log-text";
+  text.textContent = step.run;
+  line.append(mark, text);
+  track.appendChild(line);
+  requestAnimationFrame(() => line.classList.add("in"));
+  return { line, text, step };
 }
 
-function stopCounter() {
-  clearInterval(counterTimer);
-  const el = document.getElementById("loading-counter-val");
-  const final = counterTarget + Math.floor(Math.random() * 4000);
-  el.textContent = final.toLocaleString("fr-FR");
+function completeLogEntry(entry) {
+  entry.line.classList.add("done");
+  entry.text.textContent = entry.step.done;
 }
 
-/* Fil de phrases qui défile en continu (indépendant des vraies étapes)
-   pour donner une impression de calcul dense pendant toute l'attente. */
-function startTicker() {
-  const track = document.getElementById("loading-ticker-track");
-  track.innerHTML = "";
-  tickerIdx = 0;
-  const pushLine = () => {
-    const line = document.createElement("div");
-    line.className = "ticker-line";
-    line.textContent = TICKER_PHRASES[tickerIdx % TICKER_PHRASES.length];
-    tickerIdx++;
-    track.appendChild(line);
-    while (track.children.length > 4) track.removeChild(track.firstChild);
-  };
-  pushLine();
-  tickerTimer = setInterval(pushLine, 1500);
-}
-
-function stopTicker() {
-  clearInterval(tickerTimer);
-}
-
-function startLoading(url, steps = LOADING_STEPS) {
+function startLoading(url, steps = ANALYZE_LOG) {
   btn.disabled = true;
   loadingDomain.textContent = url.replace(/^https?:\/\//, "").split("/")[0];
   loadingEl.hidden = false;
 
-  const checks = [...document.getElementById("analysis-checks").children];
-  checks.forEach((c) => c.classList.remove("done"));
+  document.getElementById("work-log").replaceChildren();
+  logEntries = [];
   const bar = document.getElementById("analysis-progress");
   bar.style.width = "4%";
 
+  // Chaque étape apparaît "en cours", se coche à la fin de sa durée, puis la
+  // suivante démarre. La dernière (ms: Infinity) reste en cours jusqu'à la
+  // réponse du serveur — stopLoading coche alors tout ce qui est affiché.
   let i = 0;
-  loadingStep.textContent = steps[0];
-  stepTimer = setInterval(() => {
-    if (i < checks.length) checks[i].classList.add("done");
-    i = Math.min(i + 1, steps.length - 1);
-    loadingStep.textContent = steps[i];
-  }, 6400);
+  const next = () => {
+    const entry = pushLogEntry(steps[i]);
+    logEntries.push(entry);
+    if (Number.isFinite(steps[i].ms) && i < steps.length - 1) {
+      logTimer = setTimeout(() => {
+        completeLogEntry(entry);
+        i++;
+        next();
+      }, steps[i].ms);
+    }
+  };
+  next();
 
   // La barre approche 90 % sans jamais l'atteindre — complétée à la réponse.
   let p = 4;
   progressTimer = setInterval(() => {
-    p += (90 - p) * 0.06;
+    p += (90 - p) * 0.05;
     bar.style.width = p.toFixed(1) + "%";
   }, 600);
-
-  startCounter();
-  startTicker();
 }
 
 function stopLoading() {
-  clearInterval(stepTimer);
+  clearTimeout(logTimer);
   clearInterval(progressTimer);
   document.getElementById("analysis-progress").style.width = "100%";
-  document.querySelectorAll("#analysis-checks li").forEach((c) => c.classList.add("done"));
-  stopCounter();
-  stopTicker();
-  setTimeout(() => (loadingEl.hidden = true), 250);
+  logEntries.forEach(completeLogEntry);
+  setTimeout(() => (loadingEl.hidden = true), 400);
   btn.disabled = false;
 }
 
@@ -1149,6 +1130,15 @@ function renderModules(containerId, entries) {
   document.getElementById(containerId).replaceChildren(
     ...entries.map(([name, data]) => buildModule(name, data))
   );
+}
+
+/* Chaque section de l'analyse approfondie peut être repliée d'un clic sur
+   son titre — ouverte par défaut pour ne rien cacher. */
+for (const card of document.querySelectorAll(".chapter-inner .card")) {
+  const title = card.querySelector(".card-title");
+  if (!title) continue;
+  card.classList.add("foldable");
+  title.addEventListener("click", () => card.classList.toggle("folded"));
 }
 
 function fillList(id, items) {

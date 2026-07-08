@@ -40,20 +40,33 @@
 
     <!-- ============================================================ Hero -->
     <section class="hero hero-band">
+      <div class="hero-field" aria-hidden="true"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Analyse n'importe quel <span class="hero-title-accent">site web</span> et <span class="hl">comprends pourquoi il vend</span>.</h1>
+        <h1 class="hero-title">Colle une URL.<br />Comprends <span class="hero-title-accent">pourquoi elle vend</span>.</h1>
         <p class="hero-sub">
-          Pas un audit SEO générique : Verdict décode la stratégie business derrière un site
-          — trafic, positionnement, copywriting, confiance — pour que tu appliques ce qui marche à ton propre site.
+          Verdict décode la stratégie business derrière n'importe quel site — trafic,
+          positionnement, copywriting, publicités — et te dit quoi en reproduire.
         </p>
-        <div class="hero-actions">
-          <a href="/app" class="btn btn-primary btn-lg">
-            Lancer l'analyse
+        <form class="url-form hero-form" action="/app" method="get" id="hero-form">
+          <svg class="url-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M8.5 11.5a4 4 0 005.66 0l2.34-2.34a4 4 0 00-5.66-5.66l-1.17 1.17M11.5 8.5a4 4 0 00-5.66 0L3.5 10.84a4 4 0 005.66 5.66l1.17-1.17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="text"
+            name="u"
+            inputmode="url"
+            placeholder="concurrent.com"
+            aria-label="URL du site à décoder"
+            spellcheck="false"
+            autocomplete="off"
+            required
+          />
+          <button class="btn btn-primary" type="submit">
+            Décoder
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8h9M8.5 3.5 13 8l-4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <a href="#exemple" class="btn btn-hero-ghost btn-lg">Voir un exemple</a>
-        </div>
-        <p class="hero-note">2 analyses offertes avec un compte gratuit. Résultats en ~40 secondes.</p>
+          </button>
+        </form>
+        <p class="hero-note">2 analyses offertes avec un compte gratuit. Résultats en ~40 secondes. <a class="hero-example-link" href="#exemple">Voir un exemple de rapport</a></p>
       </div>
     </section>
 
