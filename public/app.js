@@ -798,6 +798,7 @@ function renderCompare({ url, competitorUrl, comparison }) {
     })
   );
 
+  foldCards("compare");
   compareEl.hidden = false;
   compareEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -928,6 +929,7 @@ function renderReport({ url, technologies, metrics, report, ads }) {
 
   renderAdsCenter(url, ads, r);
 
+  foldCards("report");
   reportEl.hidden = false;
   reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -1132,13 +1134,21 @@ function renderModules(containerId, entries) {
   );
 }
 
-/* Chaque section de l'analyse approfondie peut être repliée d'un clic sur
-   son titre — ouverte par défaut pour ne rien cacher. */
-for (const card of document.querySelectorAll(".chapter-inner .card")) {
+/* Le compte-rendu est présenté en mini-cartes : chaque bloc est replié en
+   une carte titre + flèche, qu'on déplie d'un clic. Le résumé et les scores
+   (report-head, dash) restent toujours visibles — c'est l'accroche. */
+for (const card of document.querySelectorAll("#report .card, #compare .card")) {
+  if (card.classList.contains("report-head") || card.classList.contains("dash") || card.classList.contains("compare-cta")) continue;
   const title = card.querySelector(".card-title");
   if (!title) continue;
-  card.classList.add("foldable");
+  card.classList.add("foldable", "folded");
   title.addEventListener("click", () => card.classList.toggle("folded"));
+}
+
+/* Referme toutes les mini-cartes d'une section (appelé à chaque nouveau
+   rendu, pour que le rapport suivant reparte plié). */
+function foldCards(rootId) {
+  document.querySelectorAll(`#${rootId} .foldable`).forEach((c) => c.classList.add("folded"));
 }
 
 function fillList(id, items) {
