@@ -16,6 +16,6 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Corps de requête invalide." });
   }
   const { status, body } = await activate(payload, bearerToken(req));
-  if (status === 200) logEvent("pro_activated");
+  if (status === 200) await logEvent("pro_activated");
   return res.status(status).json(body);
 };

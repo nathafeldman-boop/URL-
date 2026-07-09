@@ -38,6 +38,6 @@ module.exports = async (req, res) => {
   if (access.mode === "supabase" && !access.pro) {
     body.quota_restant = access.remaining;
   }
-  logEvent("analyze");
+  await logEvent("analyze");
   return res.status(status).json(body);
 };

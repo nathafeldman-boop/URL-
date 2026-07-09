@@ -1571,29 +1571,17 @@ body {
 
 /* ----------------------------------------------------------- historique */
 
-.nav-burger {
-  margin-left: auto;
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  width: 38px;
-  height: 34px;
-  padding: 8px 9px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease;
-}
+/* Bouton Historique dans la nav de l'app : explicite (icône horloge +
+   libellé), à la place de l'ancien burger anonyme que personne ne
+   comprenait comme "historique". Le hover-lift des .btn ne s'applique pas
+   à sa flèche (pas de flèche), rien d'autre à surcharger. */
+.nav-history { margin-left: auto; }
+.nav-history svg { flex-shrink: 0; }
+.nav-history:hover svg { transform: none; }
 
-.nav-burger:hover { border-color: #d4d4da; }
-
-.nav-burger span {
-  display: block;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--text);
+@media (max-width: 640px) {
+  .nav-history-label { display: none; }
+  .nav-history { padding: 8px 10px; }
 }
 
 .drawer-overlay {
@@ -2012,6 +2000,19 @@ body {
 
 .ads-hint.on { color: var(--text); }
 .ads-hint.on::before { background: var(--good); }
+
+/* Recherche de secours (nom dérivé du domaine) si le nom détecté ne sort rien. */
+.ads-alt {
+  display: inline-block;
+  margin: -8px 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 300ms ease;
+}
+
+.ads-alt:hover { color: var(--text); }
 
 .ads-checklist-title {
   font-size: 11.5px;

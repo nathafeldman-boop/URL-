@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   const plan = new URL(req.url, `${proto}://${host}`).searchParams.get("plan") || "mensuel";
   const { status, redirectUrl, body } = await createCheckout(`${proto}://${host}`, plan);
   if (redirectUrl) {
-    logEvent("checkout_click", { plan });
+    await logEvent("checkout_click", { plan });
     res.statusCode = status;
     res.setHeader("Location", redirectUrl);
     return res.end();

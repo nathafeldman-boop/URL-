@@ -65,7 +65,7 @@ const server = http.createServer(async (req, res) => {
 
       if (req.url === "/api/activate") {
         const { status, body } = await activate(payload, bearerToken(req));
-        if (status === 200) logEvent("pro_activated");
+        if (status === 200) await logEvent("pro_activated");
         return sendJson(res, status, body);
       }
 
@@ -88,7 +88,7 @@ const server = http.createServer(async (req, res) => {
         if (access.mode === "supabase" && !access.pro) {
           body.comparaisons_restantes = access.remaining;
         }
-        logEvent("compare");
+        await logEvent("compare");
         return sendJson(res, status, body);
       }
 
@@ -102,14 +102,14 @@ const server = http.createServer(async (req, res) => {
       if (access.mode === "supabase" && !access.pro) {
         body.quota_restant = access.remaining;
       }
-      logEvent("analyze");
+      await logEvent("analyze");
       return sendJson(res, status, body);
     }
     if (req.method === "GET" && req.url.split("?")[0] === "/api/checkout") {
       const plan = new URL(req.url, "http://x").searchParams.get("plan") || "mensuel";
       const { status, redirectUrl, body } = await createCheckout(`http://localhost:${PORT}`, plan);
       if (redirectUrl) {
-        logEvent("checkout_click", { plan });
+        await logEvent("checkout_click", { plan });
         res.writeHead(status, { Location: redirectUrl });
         return res.end();
       }

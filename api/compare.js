@@ -33,6 +33,6 @@ module.exports = async (req, res) => {
   if (access.mode === "supabase" && !access.pro) {
     body.comparaisons_restantes = access.remaining;
   }
-  logEvent("compare");
+  await logEvent("compare");
   return res.status(status).json(body);
 };

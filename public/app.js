@@ -1182,8 +1182,11 @@ function buildAdLinksFallback(url) {
   const q = encodeURIComponent(brand);
   return {
     brand,
-    meta_url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&media_type=all&q=${q}`,
-    tiktok_url: `https://library.tiktok.com/ads?region=all&query_type=1&adv_name=${q}`,
+    meta_url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&media_type=all&q=${q}&search_type=keyword_unordered`,
+    tiktok_url: `https://library.tiktok.com/ads?region=all&query_type=1&sort_type=last_shown_date,desc&adv_name=${q}`,
+    alt_brand: null,
+    meta_alt_url: null,
+    tiktok_alt_url: null,
   };
 }
 
@@ -1203,10 +1206,24 @@ function renderAdsCenter(url, ads, r, technologies) {
   setAdsHint("ads-meta-hint", tech.includes("Pixel Meta"), "Meta");
   setAdsHint("ads-tiktok-hint", tech.includes("Pixel TikTok"), "TikTok");
 
+  /* Recherche de secours : si le nom détecté ne donne rien dans la
+     bibliothèque, un clic relance avec le nom dérivé du domaine. */
+  setAdsAlt("ads-meta-alt", links.meta_alt_url, links.alt_brand);
+  setAdsAlt("ads-tiktok-alt", links.tiktok_alt_url, links.alt_brand);
+
   const unlocked = accessState.pro;
   document.getElementById("ads-center-body").hidden = !unlocked;
   document.getElementById("ads-opportunities").hidden = !unlocked;
   document.getElementById("ads-center-lock").hidden = unlocked;
+}
+
+function setAdsAlt(id, url, altBrand) {
+  const el = document.getElementById(id);
+  el.hidden = !url;
+  if (url) {
+    el.href = url;
+    el.textContent = `Pas de résultats ? Chercher « ${altBrand} »`;
+  }
 }
 
 function setAdsHint(id, pixelFound, platform) {
