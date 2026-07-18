@@ -96,6 +96,21 @@ async function readJson(resp) {
   }
 }
 
+/* Un 502 sur analyze/compare signifie que le budget de 55s (voir
+   remainingBudget() côté serveur) a expiré — le plus souvent un aléa
+   passager de l'API Mistral, pas une panne durable du site cible. On
+   retente une fois, silencieusement, avant d'afficher l'échec : une
+   nouvelle invocation Vercel repart avec un budget complet. */
+async function postJsonWithRetry(url, opts) {
+  let resp = await fetch(url, opts);
+  let data = await readJson(resp);
+  if (resp.status === 502) {
+    resp = await fetch(url, opts);
+    data = await readJson(resp);
+  }
+  return { resp, data };
+}
+
 async function activatePro(payload) {
   const headers = { "Content-Type": "application/json" };
   const loggedIn = isLoggedIn();
@@ -401,12 +416,11 @@ form.addEventListener("submit", async (e) => {
   track("analyse_lancee");
 
   try {
-    const resp = await fetch("/api/analyze", {
+    const { resp, data } = await postJsonWithRetry("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw }),
     });
-    const data = await readJson(resp);
     if (!resp.ok) {
       if (data.code === "compte_requis") {
         openAccountGate(data.error, { type: "analyze", url: raw });
@@ -707,12 +721,11 @@ compareForm.addEventListener("submit", async (e) => {
   startLoading(raw, COMPARE_LOG);
 
   try {
-    const resp = await fetch("/api/compare", {
+    const { resp, data } = await postJsonWithRetry("/api/compare", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ url: raw, competitor: { url: lastAnalysis.url, report: lastAnalysis.report } }),
     });
-    const data = await readJson(resp);
     if (!resp.ok) {
       if (data.code === "compte_requis") {
         openAccountGate(data.error, { type: "compare", url: raw });
